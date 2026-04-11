@@ -1,6 +1,11 @@
 import { Link } from "react-router-dom";
 import { DecisionPill } from "./DecisionPill";
-import type { InvestmentAlert } from "../domain/investment";
+import {
+  getAlertRuleDisplay,
+  getAlertSeverityDisplay,
+  getAlertStateDisplay,
+  type InvestmentAlert
+} from "../domain/investment";
 import { formatDate } from "../utils/format";
 
 interface AlertListProps {
@@ -22,14 +27,9 @@ export function AlertList({ alerts, emptyLabel = "目前沒有新的決策提醒
       {alerts.map((alert) => (
         <article key={alert.id} className="rounded-lg border border-slate-200/80 bg-white/[0.84] px-4 py-3.5">
           <div className="flex flex-wrap items-center gap-2">
-            <DecisionPill
-              label={alert.severity === "positive" ? "Positive" : alert.severity === "negative" ? "Negative" : "Neutral"}
-              tone={alert.severity}
-            />
-            <DecisionPill
-              label={alert.state === "active" ? "Active" : "Monitoring"}
-              tone={alert.state === "active" ? "neutral" : "info"}
-            />
+            <DecisionPill label={getAlertSeverityDisplay(alert.severity).label} tone={getAlertSeverityDisplay(alert.severity).tone} />
+            <DecisionPill label={getAlertStateDisplay(alert.state).label} tone={getAlertStateDisplay(alert.state).tone} />
+            <DecisionPill label={getAlertRuleDisplay(alert.rule).label} tone="info" />
             <p className="text-xs text-slate-500">{formatDate(alert.triggeredAt)}</p>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{alert.ticker}</p>
           </div>

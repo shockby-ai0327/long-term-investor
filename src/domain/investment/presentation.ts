@@ -1,4 +1,7 @@
 import type {
+  AlertRuleType,
+  AlertSeverity,
+  AlertState,
   ActionDisplay,
   ConfidenceDisplay,
   ConfidenceLevel,
@@ -67,4 +70,43 @@ export function getMarketEnvironmentDisplay(state: MarketEnvironmentState): Mark
     default:
       return { label: "Insufficient Data", tone: "info" };
   }
+}
+
+export function getAlertRuleDisplay(rule: AlertRuleType) {
+  switch (rule) {
+    case "target_zone":
+      return { label: "價格帶", description: "價格已進入或接近既有研究區間。" };
+    case "valuation_status_change":
+      return { label: "估值變化", description: "估值狀態相較前一個觀測點已轉換。" };
+    case "overall_score_change":
+      return { label: "總分變動", description: "整體長線判斷已有顯著分數差異。" };
+    case "stability_deterioration":
+      return { label: "穩定度", description: "風險輪廓或穩定度弱於前一個參考點。" };
+    case "data_update_reprice":
+      return { label: "事件後重估", description: "近期事件已推動 thesis 或估值重估。" };
+    case "style_fit":
+      return { label: "風格匹配", description: "更接近 Buffett 或 Lynch 的研究框架。" };
+    default:
+      return { label: "提醒", description: "規則已觸發新的決策提醒。" };
+  }
+}
+
+export function getAlertStateDisplay(state: AlertState) {
+  if (state === "active") {
+    return { label: "需處理", tone: "info" as const };
+  }
+
+  return { label: "監控中", tone: "neutral" as const };
+}
+
+export function getAlertSeverityDisplay(severity: AlertSeverity) {
+  if (severity === "positive") {
+    return { label: "可關注", tone: "positive" as const };
+  }
+
+  if (severity === "negative") {
+    return { label: "需警示", tone: "negative" as const };
+  }
+
+  return { label: "持續監控", tone: "neutral" as const };
 }

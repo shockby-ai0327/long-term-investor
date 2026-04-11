@@ -39,7 +39,7 @@ export function getActionDisplay(action: DecisionAction): ActionDisplay {
 export function getValuationDisplay(status: ValuationStatus): ValuationDisplay {
   switch (status) {
     case "undervalued":
-      return makeDisplay("低估 / 可關注", "positive", "估值已進入 target zone 或合理低檔。");
+      return makeDisplay("低估 / 可關注", "positive", "估值已進入研究區間或合理低檔。");
     case "fair":
       return makeDisplay("合理 / 觀察", "neutral", "估值可接受，但還需要看品質與風險。");
     case "overvalued":

@@ -50,7 +50,7 @@ export function deriveCurrentPosition(stock: Stock, targetZone: ManualTargetZone
     if (stock.currentPrice < targetZone.low) {
       return {
         metric: "price",
-        label: "低於 target zone",
+        label: "低於研究區間",
         valueLabel: `${stock.currentPrice.toFixed(1)} / ${targetZone.currency ?? stock.currency}`,
         zone: "below_target"
       };
@@ -59,7 +59,7 @@ export function deriveCurrentPosition(stock: Stock, targetZone: ManualTargetZone
     if (stock.currentPrice <= targetZone.high) {
       return {
         metric: "price",
-        label: "位於 target zone",
+        label: "位於研究區間",
         valueLabel: `${stock.currentPrice.toFixed(1)} / ${targetZone.currency ?? stock.currency}`,
         zone: "within_target"
       };
@@ -68,7 +68,7 @@ export function deriveCurrentPosition(stock: Stock, targetZone: ManualTargetZone
     if (stock.currentPrice <= targetZone.high * 1.05) {
       return {
         metric: "price",
-        label: "接近 target zone",
+        label: "接近研究區間",
         valueLabel: `${stock.currentPrice.toFixed(1)} / ${targetZone.currency ?? stock.currency}`,
         zone: "near_target"
       };
@@ -76,7 +76,7 @@ export function deriveCurrentPosition(stock: Stock, targetZone: ManualTargetZone
 
     return {
       metric: "price",
-      label: "高於 target zone",
+      label: "高於研究區間",
       valueLabel: `${stock.currentPrice.toFixed(1)} / ${targetZone.currency ?? stock.currency}`,
       zone: "above_target"
     };
@@ -113,7 +113,7 @@ export function deriveCurrentPosition(stock: Stock, targetZone: ManualTargetZone
 
   return {
     metric: "price",
-    label: "缺少 target zone",
+    label: "缺少研究區間",
     valueLabel: "--",
     zone: "insufficient_data"
   };

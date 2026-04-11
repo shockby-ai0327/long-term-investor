@@ -339,7 +339,7 @@ export function StockDetailPage() {
               <MetricCard label="ROIC" value={formatPercent(stock.financialMetrics.roic)} hint="投入資本效率" />
               <MetricCard label="毛利率" value={formatPercent(stock.financialMetrics.grossMargin)} hint="產品與定價結構" />
               <MetricCard label="營業利益率" value={formatPercent(stock.financialMetrics.operatingMargin)} hint="營運效率" />
-              <MetricCard label="負債比" value={stock.financialMetrics.debtToEquity.toFixed(2)} hint="Debt / equity" />
+              <MetricCard label="負債比" value={stock.financialMetrics.debtToEquity.toFixed(2)} hint="負債槓桿近似" />
               <MetricCard
                 label="自由現金流"
                 value={formatBillion(stock.financialMetrics.freeCashFlowBillion, stock.currency)}

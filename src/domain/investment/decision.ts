@@ -221,7 +221,7 @@ function buildReasons(
   }
 
   if (valuationStatus === "undervalued") {
-    reasons.push("估值已進入可研究的 target zone。");
+    reasons.push("估值已進入可研究的區間。");
   }
 
   if (valuationStatus === "overvalued") {

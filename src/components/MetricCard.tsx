@@ -6,9 +6,9 @@ interface MetricCardProps {
 }
 
 const toneMap = {
-  default: "border-slate-200/80 bg-white/80",
-  positive: "border-emerald-200/80 bg-emerald-50/65",
-  warning: "border-amber-200/90 bg-amber-50/75"
+  default: "border-slate-200/80 bg-white/85",
+  positive: "border-emerald-200/80 bg-emerald-50/55",
+  warning: "border-amber-200/85 bg-amber-50/60"
 };
 
 export function MetricCard({
@@ -18,10 +18,12 @@ export function MetricCard({
   tone = "default"
 }: MetricCardProps) {
   return (
-    <div className={`rounded-xl border px-4 py-3.5 ${toneMap[tone]}`}>
-      <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">{label}</p>
-      <p className="mt-2 text-[1.65rem] font-semibold tracking-tight text-ink-900">{value}</p>
-      <p className="mt-1.5 text-sm leading-6 text-slate-500">{hint}</p>
+    <div className={`rounded-lg border px-3.5 py-3 ${toneMap[tone]}`}>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">{label}</p>
+      <p className="mt-1.5 text-[1.1rem] font-semibold leading-tight tracking-tight text-ink-900">
+        {value}
+      </p>
+      <p className="mt-1 text-xs leading-5 text-slate-500">{hint}</p>
     </div>
   );
 }

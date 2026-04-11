@@ -20,25 +20,53 @@ export function ValuationBand({
   const medianPosition = clamp(((median - low) / span) * 100, 0, 100);
 
   return (
-    <div className="rounded-[24px] border border-slate-200/80 bg-sand-50/70 p-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <p className="text-sm font-medium text-ink-900">{label}</p>
-        <p className="text-sm font-semibold text-sage-600">目前 {current.toFixed(1)}x</p>
+    <div className="space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">{label}</p>
+          <p className="mt-1 text-[1.35rem] font-semibold tracking-tight text-ink-900">
+            {current.toFixed(1)}x
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+            median
+          </p>
+          <p className="mt-1 text-sm font-medium text-slate-600">{median.toFixed(1)}x</p>
+        </div>
       </div>
-      <div className="relative h-3 rounded-full bg-gradient-to-r from-emerald-200 via-amber-200 to-rose-200">
+
+      <div className="relative h-8">
+        <div className="absolute inset-x-0 top-3 h-[3px] rounded-full bg-gradient-to-r from-emerald-200 via-amber-200 to-rose-200" />
         <div
-          className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border-2 border-white bg-ink-900 shadow"
-          style={{ left: `calc(${currentPosition}% - 10px)` }}
-        />
-        <div
-          className="absolute top-1/2 h-6 w-0.5 -translate-y-1/2 bg-slate-500"
+          className="absolute top-1.5 h-5 w-px bg-slate-400"
           style={{ left: `${medianPosition}%` }}
         />
+        <div
+          className="absolute top-0 h-8 w-[2px] bg-ink-900"
+          style={{ left: `${currentPosition}%` }}
+        />
+        <div
+          className="absolute top-0 -translate-x-1/2 rounded bg-ink-900 px-1.5 py-0.5 text-[10px] font-semibold text-white"
+          style={{ left: `${currentPosition}%` }}
+        >
+          目前
+        </div>
       </div>
-      <div className="mt-3 flex items-center justify-between text-xs tracking-wide text-slate-500">
-        <span>低點 {low.toFixed(1)}x</span>
-        <span>中位 {median.toFixed(1)}x</span>
-        <span>高點 {high.toFixed(1)}x</span>
+
+      <div className="grid grid-cols-3 gap-2 text-[11px] leading-4 text-slate-500">
+        <div>
+          <p className="uppercase tracking-[0.18em] text-slate-400">Low</p>
+          <p className="mt-1 font-medium text-ink-900">{low.toFixed(1)}x</p>
+        </div>
+        <div className="text-center">
+          <p className="uppercase tracking-[0.18em] text-slate-400">Median</p>
+          <p className="mt-1 font-medium text-ink-900">{median.toFixed(1)}x</p>
+        </div>
+        <div className="text-right">
+          <p className="uppercase tracking-[0.18em] text-slate-400">High</p>
+          <p className="mt-1 font-medium text-ink-900">{high.toFixed(1)}x</p>
+        </div>
       </div>
     </div>
   );

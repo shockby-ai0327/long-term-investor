@@ -3,34 +3,34 @@ import { NavLink } from "react-router-dom";
 const navItems = [
   {
     to: "/",
-    label: "Dashboard",
-    caption: "首頁工作台",
+    label: "首頁工作台",
+    caption: "Dashboard",
     end: true
   },
   {
     to: "/watchlist",
-    label: "Watchlist",
-    caption: "觀察名單"
+    label: "觀察名單",
+    caption: "Watchlist"
   },
   {
     to: "/stocks/MSFT",
-    label: "Stock Detail",
-    caption: "個股分析"
+    label: "個股分析",
+    caption: "Stock Detail"
   },
   {
     to: "/thesis/MSFT",
-    label: "Thesis / Notes",
-    caption: "投資假設"
+    label: "投資假設",
+    caption: "Thesis / Notes"
   },
   {
     to: "/portfolio",
-    label: "Portfolio",
-    caption: "投資組合"
+    label: "投資組合",
+    caption: "Portfolio"
   },
   {
     to: "/tracking",
-    label: "Tracking",
-    caption: "追蹤工作台"
+    label: "追蹤工作台",
+    caption: "Tracking"
   }
 ];
 
@@ -40,7 +40,7 @@ interface SidebarNavProps {
 
 export function SidebarNav({ compact = false }: SidebarNavProps) {
   return (
-    <nav className={`flex ${compact ? "gap-2 overflow-x-auto pb-1" : "flex-col gap-1.5"}`}>
+    <nav className={`flex ${compact ? "gap-1.5 overflow-x-auto pb-1" : "flex-col gap-1"}`}>
       {navItems.map((item) => (
         <NavLink
           key={item.to}
@@ -48,16 +48,33 @@ export function SidebarNav({ compact = false }: SidebarNavProps) {
           to={item.to}
           className={({ isActive }) =>
             [
-              "group rounded-xl border px-3 py-3 transition duration-200",
-              compact ? "min-w-[170px]" : "",
+              "group relative overflow-hidden rounded-lg transition duration-150",
+              compact ? "min-w-[132px] shrink-0 px-3 py-2.5" : "px-3 py-2.5",
               isActive
-                ? "border-ink-900 bg-ink-900 text-white shadow-[0_12px_24px_-18px_rgba(23,33,38,0.75)]"
-                : "border-transparent bg-transparent text-ink-900 hover:border-slate-200/85 hover:bg-white/70"
+                ? "bg-ink-900 text-white"
+                : "text-slate-700 hover:bg-white/78 hover:text-ink-900"
             ].join(" ")
           }
         >
-          <p className="text-[11px] uppercase tracking-[0.24em] text-current/55">{item.label}</p>
-          <p className="mt-1.5 text-sm font-medium">{item.caption}</p>
+          {({ isActive }) => (
+            <>
+              <span
+                className={[
+                  "absolute inset-y-2 left-0 w-[2px] rounded-full transition",
+                  compact ? "hidden" : "",
+                  isActive ? "bg-white/90" : "bg-transparent group-hover:bg-slate-300/80"
+                ].join(" ")}
+              />
+              <div className={compact ? "" : "pl-2"}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <p className="text-sm font-medium tracking-[0.01em]">{item.label}</p>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-current/45">
+                    {item.caption}
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
         </NavLink>
       ))}
     </nav>

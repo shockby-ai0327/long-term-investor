@@ -31,7 +31,7 @@ export function ScoreBadge({ label, score, summary }: ScoreBadgeProps) {
       </div>
       <div className="text-right">
         <p className={`text-[1.1rem] font-semibold tracking-tight ${tone.text}`}>{score.toFixed(1)}</p>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">/ 10</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">/ 10</p>
       </div>
     </div>
   );

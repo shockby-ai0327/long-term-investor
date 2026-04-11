@@ -2,6 +2,7 @@ import type {
   AlertRuleType,
   AlertSeverity,
   AlertState,
+  InvestmentAlert,
   ActionDisplay,
   ConfidenceDisplay,
   ConfidenceLevel,
@@ -11,6 +12,7 @@ import type {
   FitLevel,
   MarketEnvironmentDisplay,
   MarketEnvironmentState,
+  StockAnalysisRecord,
   ValuationDisplay,
   ValuationStatus
 } from "./types";
@@ -54,21 +56,21 @@ export function getConfidenceDisplay(level: ConfidenceLevel): ConfidenceDisplay 
 }
 
 export function getFitDisplay(level: FitLevel): FitDisplay {
-  if (level === "strong_fit") return { label: "Strong fit", tone: "positive" };
-  if (level === "moderate_fit") return { label: "Moderate fit", tone: "neutral" };
-  return { label: "Weak fit", tone: "negative" };
+  if (level === "strong_fit") return { label: "高度符合", tone: "positive" };
+  if (level === "moderate_fit") return { label: "部分符合", tone: "neutral" };
+  return { label: "弱符合", tone: "negative" };
 }
 
 export function getMarketEnvironmentDisplay(state: MarketEnvironmentState): MarketEnvironmentDisplay {
   switch (state) {
     case "risk_on":
-      return { label: "Risk On", tone: "positive" };
+      return { label: "可逐步布局", tone: "positive" };
     case "defensive":
-      return { label: "Defensive", tone: "negative" };
+      return { label: "偏防守", tone: "negative" };
     case "neutral":
-      return { label: "Neutral", tone: "neutral" };
+      return { label: "偏觀察", tone: "neutral" };
     default:
-      return { label: "Insufficient Data", tone: "info" };
+      return { label: "資料不足", tone: "info" };
   }
 }
 
@@ -109,4 +111,128 @@ export function getAlertSeverityDisplay(severity: AlertSeverity) {
   }
 
   return { label: "持續監控", tone: "neutral" as const };
+}
+
+export function getDecisionSectionDisplay(action: DecisionAction) {
+  switch (action) {
+    case "study_now":
+      return {
+        label: "值得研究",
+        description: "品質、估值與風險報酬比都足以升級研究。",
+        tone: "positive" as const
+      };
+    case "watch":
+      return {
+        label: "持續觀察",
+        description: "理由足以繼續追蹤，但還不到投入優先研究資源。",
+        tone: "neutral" as const
+      };
+    case "wait_for_better_price":
+      return {
+        label: "等更佳價格",
+        description: "公司不差，但估值還沒提供足夠安全邊際。",
+        tone: "negative" as const
+      };
+    case "avoid_for_now":
+      return {
+        label: "先不要碰",
+        description: "風險、品質或穩定度不支持新增研究或部位。",
+        tone: "negative" as const
+      };
+    default:
+      return {
+        label: "資料不足",
+        description: "關鍵資訊不足，暫時不給過強結論。",
+        tone: "info" as const
+      };
+  }
+}
+
+export function getPrimaryAlert(record: StockAnalysisRecord) {
+  return record.alerts.find((alert) => alert.state === "active") ?? record.alerts[0];
+}
+
+export function getAlertIndicatorDisplay(alert?: InvestmentAlert) {
+  if (!alert) {
+    return {
+      label: "暫無新警示",
+      tone: "neutral" as const,
+      detail: "目前沒有新的規則提醒。"
+    };
+  }
+
+  const severityDisplay = getAlertSeverityDisplay(alert.severity);
+  return {
+    label: severityDisplay.label,
+    tone: severityDisplay.tone,
+    detail: alert.title
+  };
+}
+
+export function getResearchPriorityScore(record: StockAnalysisRecord) {
+  const actionBase = {
+    study_now: 130,
+    watch: 100,
+    wait_for_better_price: 74,
+    avoid_for_now: 36,
+    insufficient_data: 8
+  }[record.decision.action];
+
+  const valuationBonus = {
+    undervalued: 16,
+    fair: 8,
+    overvalued: -10,
+    insufficient_data: -16
+  }[record.decision.valuationStatus];
+
+  const confidenceBonus = {
+    high: 10,
+    medium: 5,
+    low: -12
+  }[record.decision.confidenceLevel];
+
+  const alertBonus = record.alerts.some((alert) => alert.severity === "positive")
+    ? 6
+    : record.alerts.some((alert) => alert.severity === "negative")
+      ? 2
+      : 0;
+
+  const riskPenalty = Math.min(record.decision.riskFlags.length, 3) * 4;
+
+  return actionBase + valuationBonus + confidenceBonus + alertBonus + record.overallScore - riskPenalty;
+}
+
+export function getPriorityPanelDisplay(record: StockAnalysisRecord) {
+  if (record.decision.action === "study_now") {
+    return {
+      label: "本輪優先研究",
+      description: "已通過研究門檻，現在值得投入更多研究時間。"
+    };
+  }
+
+  if (record.decision.action === "watch" && record.overallScore >= 70) {
+    return {
+      label: "最接近研究門檻",
+      description: "目前沒有完全達標的標的，先看最接近升級研究的公司。"
+    };
+  }
+
+  if (record.decision.action === "wait_for_better_price") {
+    return {
+      label: "公司值得追蹤",
+      description: "問題主要在估值，不在公司品質。"
+    };
+  }
+
+  if (record.decision.action === "avoid_for_now") {
+    return {
+      label: "先保留觀察距離",
+      description: "先把研究資源留給更有風險報酬比的標的。"
+    };
+  }
+
+  return {
+    label: "先補資料",
+    description: "關鍵資訊不足，暫時不要放大結論。"
+  };
 }

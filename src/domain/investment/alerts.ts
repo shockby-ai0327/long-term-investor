@@ -1,5 +1,6 @@
 import { alertThresholds } from "./config";
 import { deriveValuationStatus } from "./decision";
+import { getValuationDisplay } from "./presentation";
 import { clamp, daysBetween, round } from "./utils";
 import type {
   InvestmentAlert,
@@ -91,13 +92,16 @@ export function evaluateAlerts(record: StockAnalysisRecord, snapshotDate: string
   }
 
   if (previousValuationStatus !== record.decision.valuationStatus) {
+    const previousValuationDisplay = getValuationDisplay(previousValuationStatus);
+    const currentValuationDisplay = getValuationDisplay(record.decision.valuationStatus);
+
     alerts.push(
       createAlert(record, {
         rule: "valuation_status_change",
         state: "active",
         severity: record.decision.valuationStatus === "overvalued" ? "negative" : "positive",
         title: "估值狀態改變",
-        summary: `${record.stock.ticker} 由 ${previousValuationStatus} 轉為 ${record.decision.valuationStatus}。`,
+        summary: `${record.stock.ticker} 由 ${previousValuationDisplay.label} 轉為 ${currentValuationDisplay.label}。`,
         reason: "以歷史估值帶前一個觀測點與目前位置比較。",
         triggeredAt: snapshotDate,
         actionLabel: "查看估值",
@@ -129,7 +133,7 @@ export function evaluateAlerts(record: StockAnalysisRecord, snapshotDate: string
         state: "active",
         severity: "negative",
         title: "穩定度惡化",
-        summary: `${record.stock.ticker} 的 Stability / Risk 下降 ${Math.abs(stabilityDelta).toFixed(1)} 分。`,
+        summary: `${record.stock.ticker} 的穩定度 / 風險下降 ${Math.abs(stabilityDelta).toFixed(1)} 分。`,
         reason: "目前風險輪廓明顯弱於舊版 fallback snapshot。",
         triggeredAt: snapshotDate,
         actionLabel: "查看風險",
@@ -152,7 +156,7 @@ export function evaluateAlerts(record: StockAnalysisRecord, snapshotDate: string
         summary: `${record.stock.ticker} 在 ${latestEvent.title} 後出現明顯評分變化。`,
         reason: "用近期事件日期當作觸發點，提醒重新寫回 thesis。",
         triggeredAt: latestEvent.date,
-        actionLabel: "更新 Thesis",
+        actionLabel: "更新投資假設",
         actionTo: `/thesis/${record.stock.ticker}`
       })
     );

@@ -86,7 +86,7 @@ export function scoreBusinessQuality(stock: Stock) {
     }
   ];
 
-  return summarizeDimension("businessQuality", "Business Quality", contributions);
+  return summarizeDimension("businessQuality", "商業品質", contributions);
 }
 
 export function scoreGrowth(stock: Stock) {
@@ -129,7 +129,7 @@ export function scoreGrowth(stock: Stock) {
     }
   ];
 
-  return summarizeDimension("growth", "Growth", contributions);
+  return summarizeDimension("growth", "成長", contributions);
 }
 
 function averageGrowthConsistency(stock: Stock) {
@@ -182,7 +182,7 @@ export function scoreFinancialHealth(stock: Stock) {
     }
   ];
 
-  return summarizeDimension("financialHealth", "Financial Health", contributions);
+  return summarizeDimension("financialHealth", "財務體質", contributions);
 }
 
 export function scoreProfitability(stock: Stock) {
@@ -212,7 +212,7 @@ export function scoreProfitability(stock: Stock) {
       detail: "資本回收效率。"
     },
     {
-      label: "Net margin",
+      label: "淨利率",
       score: 0,
       weight: missingDataWeights.profitability.netMargin,
       detail: "缺少 net margin。",
@@ -221,7 +221,7 @@ export function scoreProfitability(stock: Stock) {
     }
   ];
 
-  return summarizeDimension("profitability", "Profitability", contributions);
+  return summarizeDimension("profitability", "獲利能力", contributions);
 }
 
 function bandAttractiveness(current: number, low: number, high: number) {
@@ -262,7 +262,7 @@ export function scoreValuation(stock: Stock, targetZoneScore: number) {
       detail: "PB 相對歷史區間位置。"
     },
     {
-      label: "FCF Yield",
+      label: "現金流殖利率",
       score: normalizeScore(fcfYield, 1, 6),
       weight: 15,
       detail: "以 FCF yield 補足估值吸引力。"
@@ -275,7 +275,7 @@ export function scoreValuation(stock: Stock, targetZoneScore: number) {
     }
   ];
 
-  return summarizeDimension("valuation", "Valuation", contributions);
+  return summarizeDimension("valuation", "估值", contributions);
 }
 
 export function scoreStabilityRisk(stock: Stock) {
@@ -314,7 +314,7 @@ export function scoreStabilityRisk(stock: Stock) {
     }
   ];
 
-  return summarizeDimension("stabilityRisk", "Stability / Risk", contributions);
+  return summarizeDimension("stabilityRisk", "穩定度 / 風險", contributions);
 }
 
 export function computeOverallScore(dimensions: Record<DimensionKey, ScoreDimensionResult>) {

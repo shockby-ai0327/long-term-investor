@@ -4,8 +4,8 @@
 
 :root {
   color-scheme: light;
-  --bg-main: #edf1f2;
-  --bg-panel: rgba(255, 255, 255, 0.88);
+  --bg-main: #eef2f3;
+  --bg-panel: rgba(255, 255, 255, 0.86);
   --line: rgba(36, 53, 61, 0.1);
   --text-main: #172126;
   --text-muted: #5c6b72;
@@ -19,8 +19,8 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(circle at top left, rgba(58, 92, 116, 0.06), transparent 26%),
-    linear-gradient(180deg, #f7f9fa 0%, var(--bg-main) 100%);
+    radial-gradient(circle at top left, rgba(56, 83, 104, 0.045), transparent 22%),
+    linear-gradient(180deg, #f6f8f9 0%, var(--bg-main) 100%);
   color: var(--text-main);
   font-family: SF Pro Text, PingFang TC, Noto Sans TC, Helvetica Neue, sans-serif;
 }
@@ -43,11 +43,11 @@ select {
 
 @layer components {
   .panel {
-    @apply rounded-[14px] border border-slate-200/75 bg-[rgba(255,255,255,0.88)] shadow-[0_10px_18px_-20px_rgba(15,23,42,0.2)];
+    @apply rounded-xl border border-slate-200/80 bg-[rgba(255,255,255,0.86)] shadow-[0_10px_24px_-24px_rgba(15,23,42,0.22)];
   }
 
   .decision-panel {
-    @apply rounded-[14px] border border-slate-200/75 bg-white/[0.86];
+    @apply rounded-[12px] border border-slate-200/75 bg-white/[0.78];
   }
 
   .section-title {
@@ -67,7 +67,7 @@ select {
   }
 
   .field-shell {
-    @apply rounded-lg border border-slate-200 bg-white/75 px-3.5 py-2.5 text-sm text-ink-900 outline-none transition duration-200 focus:border-sage-500 focus:bg-white focus:ring-2 focus:ring-sage-500/15;
+    @apply rounded-lg border border-slate-200 bg-white/80 px-3.5 py-2.5 text-sm text-ink-900 outline-none transition duration-200 focus:border-sage-500 focus:bg-white focus:ring-2 focus:ring-sage-500/15;
   }
 
   .table-row {
@@ -75,11 +75,47 @@ select {
   }
 
   .summary-metric {
-    @apply rounded-lg border border-slate-200/75 bg-white/[0.84] px-3.5 py-3;
+    @apply rounded-lg border border-slate-200/75 bg-white/[0.82] px-3.5 py-3;
   }
 
   .toolbar-button {
-    @apply inline-flex items-center justify-center rounded-lg border px-3 py-2 text-sm font-medium transition;
+    @apply inline-flex items-center justify-center rounded-lg border px-3 py-2 text-sm font-medium transition duration-150;
+  }
+
+  .shell-statusbar {
+    @apply flex flex-wrap gap-2 rounded-xl border border-slate-200/80 bg-white/[0.72] px-3 py-2;
+  }
+
+  .shell-statusitem {
+    @apply flex min-w-[180px] flex-1 items-center gap-2 rounded-lg border border-slate-200/75 bg-white/[0.72] px-3 py-2;
+  }
+
+  .workspace-rail {
+    @apply rounded-xl border border-slate-200/80 bg-white/[0.84] px-4 py-4;
+  }
+
+  .decision-row {
+    @apply grid gap-3 border-b border-slate-200/75 py-3.5 last:border-b-0 last:pb-0 first:pt-0;
+  }
+
+  .decision-strip {
+    @apply flex flex-wrap items-center gap-2 text-xs text-slate-500;
+  }
+
+  .facts-table {
+    @apply divide-y divide-slate-200/75;
+  }
+
+  .facts-row {
+    @apply grid gap-2 py-2.5 md:grid-cols-[120px_minmax(0,1fr)];
+  }
+
+  .symbol-switcher {
+    @apply flex min-w-max gap-1.5;
+  }
+
+  .symbol-chip {
+    @apply rounded-md border border-transparent px-3 py-2 text-left transition duration-150;
   }
 }
 

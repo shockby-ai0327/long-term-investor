@@ -11,8 +11,9 @@ function toBadgeTone(tone: DisplayTone) {
 interface DecisionPillProps {
   label: string;
   tone: DisplayTone;
+  size?: "sm" | "md";
 }
 
-export function DecisionPill({ label, tone }: DecisionPillProps) {
-  return <Badge tone={toBadgeTone(tone)}>{label}</Badge>;
+export function DecisionPill({ label, tone, size = "md" }: DecisionPillProps) {
+  return <Badge tone={toBadgeTone(tone)} size={size}>{label}</Badge>;
 }

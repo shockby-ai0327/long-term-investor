@@ -9,7 +9,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ eyebrow, title, description, actions }: PageHeaderProps) {
   return (
-    <header className="mb-4 animate-rise">
+    <header className="mb-4">
       <div className="flex flex-col gap-3 border-b border-slate-200/80 pb-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-3xl">
           <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-slate-500">

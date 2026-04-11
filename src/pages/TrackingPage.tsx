@@ -214,7 +214,7 @@ function PriorityRow({
   const secondaryAction = reminder.actions[1];
 
   return (
-    <article className="rounded-xl border border-slate-200/75 bg-white/88 px-4 py-4">
+    <article className="rounded-xl border border-slate-200/75 bg-white/[0.88] px-4 py-4">
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)_190px] xl:items-start">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -289,7 +289,7 @@ function CompactReminderRow({
   const urgency = getUrgency(reminder);
 
   return (
-    <article className="rounded-xl border border-slate-200/75 bg-white/84 px-4 py-3.5">
+    <article className="rounded-xl border border-slate-200/75 bg-white/[0.84] px-4 py-3.5">
       <div className="grid gap-3 lg:grid-cols-[180px_minmax(0,1fr)_160px] lg:items-start">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -501,7 +501,7 @@ export function TrackingPage() {
         >
           <div className="space-y-3">
             {disciplineReminders.map((reminder) => (
-              <article key={reminder.id} className="rounded-xl border border-slate-200/75 bg-white/84 px-4 py-3.5">
+              <article key={reminder.id} className="rounded-xl border border-slate-200/75 bg-white/[0.84] px-4 py-3.5">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge tone={getTypeTone(reminder.type)}>{reminder.type}</Badge>
                   <Badge tone={getStatusTone(reminder.status)}>{reminder.status}</Badge>
@@ -531,7 +531,7 @@ export function TrackingPage() {
         >
           <div className="space-y-3">
             {completedReminders.slice(0, 4).map((reminder) => (
-              <article key={reminder.id} className="rounded-xl border border-slate-200/75 bg-white/84 px-4 py-3.5">
+              <article key={reminder.id} className="rounded-xl border border-slate-200/75 bg-white/[0.84] px-4 py-3.5">
                 <div className="grid gap-3 lg:grid-cols-[180px_minmax(0,1fr)_140px] lg:items-start">
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">

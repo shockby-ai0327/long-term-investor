@@ -3,8 +3,8 @@ import { NavLink } from "react-router-dom";
 const navItems = [
   {
     to: "/",
-    label: "首頁工作台",
-    caption: "Dashboard",
+    label: "市場總覽",
+    caption: "Overview",
     end: true
   },
   {
@@ -52,7 +52,7 @@ export function SidebarNav({ compact = false }: SidebarNavProps) {
               compact ? "min-w-[132px] shrink-0 px-3 py-2.5" : "px-3 py-2.5",
               isActive
                 ? "bg-ink-900 text-white"
-                : "text-slate-700 hover:bg-white/78 hover:text-ink-900"
+                : "text-slate-700 hover:bg-white/[0.78] hover:text-ink-900"
             ].join(" ")
           }
         >

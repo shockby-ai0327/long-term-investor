@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { eventReminders, watchlistItems } from "../data/mockData";
+import { eventReminders, mockSnapshot, stocks, watchlistItems } from "../data/mockData";
+import { buildInvestmentWorkbench, type InvestmentWorkbench, type MarketOverviewState, type StockAnalysisRecord } from "../domain/investment";
 import type {
   ReminderProgress,
   ReminderWorkspaceState,
@@ -16,15 +17,23 @@ const watchlistWorkspaceStorageKey = "long-term-investor:watchlist-workspace";
 interface WorkspaceStateContextValue {
   reminders: WorkspaceReminder[];
   watchlist: WorkspaceWatchlistItem[];
+  watchlistUniverse: WorkspaceWatchlistItem[];
+  analyses: StockAnalysisRecord[];
+  trackedAnalyses: StockAnalysisRecord[];
+  alerts: InvestmentWorkbench["alerts"];
+  alertHistory: InvestmentWorkbench["alertHistory"];
+  marketOverview: MarketOverviewState;
   setReminderProgress: (id: string, progress: ReminderProgress) => void;
   resetReminderProgress: (id: string) => void;
   setWatchlistFocus: (id: string, focusState: WatchlistFocusState) => void;
+  toggleWatchlistTracking: (id: string) => void;
+  getAnalysisByTicker: (ticker?: string) => StockAnalysisRecord;
 }
 
 const WorkspaceStateContext = createContext<WorkspaceStateContextValue | null>(null);
 
 function getTodayStamp() {
-  return new Date().toISOString().slice(0, 10);
+  return mockSnapshot.asOfDate;
 }
 
 function parseStorage<T>(value: string | null) {
@@ -96,7 +105,7 @@ export function WorkspaceStateProvider({ children }: { children: ReactNode }) {
     [reminderStateMap]
   );
 
-  const watchlist = useMemo<WorkspaceWatchlistItem[]>(
+  const watchlistUniverse = useMemo<WorkspaceWatchlistItem[]>(
     () =>
       watchlistItems.map((item) => {
         const localState = watchlistStateMap[item.id];
@@ -104,10 +113,30 @@ export function WorkspaceStateProvider({ children }: { children: ReactNode }) {
         return {
           ...item,
           focusState: localState?.focusState ?? getDefaultFocusState(item),
-          focusUpdatedAt: localState?.updatedAt
+          focusUpdatedAt: localState?.updatedAt,
+          isTracked: localState?.isTracked ?? true,
+          trackingUpdatedAt: localState?.trackingUpdatedAt
         };
       }),
     [watchlistStateMap]
+  );
+
+  const watchlist = useMemo(
+    () => watchlistUniverse.filter((item) => item.isTracked),
+    [watchlistUniverse]
+  );
+
+  const investmentWorkbench = useMemo(
+    () =>
+      buildInvestmentWorkbench(
+        {
+          stocks,
+          reminders,
+          watchlist: watchlistUniverse
+        },
+        mockSnapshot.asOfDate
+      ),
+    [reminders, watchlistUniverse]
   );
 
   function setReminderProgress(id: string, progress: ReminderProgress) {
@@ -132,10 +161,28 @@ export function WorkspaceStateProvider({ children }: { children: ReactNode }) {
     setWatchlistStateMap((current) => ({
       ...current,
       [id]: {
+        ...(current[id] ?? {}),
         focusState,
         updatedAt: getTodayStamp()
       }
     }));
+  }
+
+  function toggleWatchlistTracking(id: string) {
+    setWatchlistStateMap((current) => ({
+      ...current,
+      [id]: {
+        ...(current[id] ?? {}),
+        focusState: current[id]?.focusState ?? getDefaultFocusState(watchlistItems.find((item) => item.id === id)!),
+        updatedAt: current[id]?.updatedAt ?? getTodayStamp(),
+        isTracked: !(current[id]?.isTracked ?? true),
+        trackingUpdatedAt: getTodayStamp()
+      }
+    }));
+  }
+
+  function getAnalysisByTicker(ticker?: string) {
+    return investmentWorkbench.analysesByTicker[ticker ?? ""] ?? investmentWorkbench.analyses[0];
   }
 
   return (
@@ -143,9 +190,17 @@ export function WorkspaceStateProvider({ children }: { children: ReactNode }) {
       value={{
         reminders,
         watchlist,
+        watchlistUniverse,
+        analyses: investmentWorkbench.analyses,
+        trackedAnalyses: investmentWorkbench.trackedAnalyses,
+        alerts: investmentWorkbench.alerts,
+        alertHistory: investmentWorkbench.alertHistory,
+        marketOverview: investmentWorkbench.marketOverview,
         setReminderProgress,
         resetReminderProgress,
-        setWatchlistFocus
+        setWatchlistFocus,
+        toggleWatchlistTracking,
+        getAnalysisByTicker
       }}
     >
       {children}

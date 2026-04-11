@@ -1,358 +1,268 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Badge } from "../components/Badge";
+import { AlertList } from "../components/AlertList";
+import { DecisionPill } from "../components/DecisionPill";
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
-import { mockSnapshot } from "../data/mockData";
+import {
+  getActionDisplay,
+  getConfidenceDisplay,
+  getValuationDisplay
+} from "../domain/investment";
 import { useWorkspaceState } from "../state/WorkspaceStateProvider";
-import type { ReminderType, WatchlistFocusState, WorkspaceWatchlistItem } from "../types/investment";
-import { formatCurrency, formatDate } from "../utils/format";
+import { formatDate } from "../utils/format";
 
-const allTags = ["全部", "高品質公司", "觀察估值", "等待財報", "研究中", "核心持股", "AI 基建", "半導體設備"];
-const focusStates: WatchlistFocusState[] = ["本輪研究", "等待事件", "等待估值", "維持追蹤"];
-
-function getSignalTone(signal: WorkspaceWatchlistItem["valuationSignal"]) {
-  if (signal === "偏高觀察") return "critical" as const;
-  if (signal === "低估待研究") return "positive" as const;
-  return "default" as const;
-}
-
-function getFocusTone(focusState: WatchlistFocusState) {
-  switch (focusState) {
-    case "本輪研究":
-      return "warning" as const;
-    case "等待事件":
-      return "info" as const;
-    case "等待估值":
-      return "critical" as const;
-    default:
-      return "default" as const;
-  }
-}
-
-function getReminderTone(type?: ReminderType) {
-  if (type === "估值") return "critical" as const;
-  if (type === "Thesis") return "warning" as const;
-  if (type === "財報" || type === "營收") return "info" as const;
-  return "default" as const;
-}
-
-function getResearchAction(item: WorkspaceWatchlistItem) {
-  switch (item.focusState) {
-    case "本輪研究":
-      return "補齊商業模式、競爭優勢與風險，完成一版可檢查的 Thesis。";
-    case "等待事件":
-      return "先等下一次財報或營收，再依事件結果更新判斷。";
-    case "等待估值":
-      return "先觀察價格回到目標區間，不急著新增部位。";
-    default:
-      return "維持追蹤，等更好的價格或新的基本面訊號。";
-  }
-}
+type SortKey = "score" | "valuation" | "updated";
 
 function SummaryMetric({
   label,
   value,
-  note,
-  tone = "default"
+  note
 }: {
   label: string;
-  value: number | string;
+  value: string | number;
   note: string;
-  tone?: "default" | "warning" | "critical" | "info";
 }) {
-  const toneClassMap = {
-    default: "border-slate-200/75 bg-white/80 text-slate-600",
-    warning: "border-amber-200/90 bg-amber-50/80 text-amber-800",
-    critical: "border-rose-200/90 bg-rose-50/80 text-rose-700",
-    info: "border-sky-200/90 bg-sky-50/80 text-sky-700"
-  };
-
   return (
-    <div className={`rounded-xl border px-3.5 py-3 ${toneClassMap[tone]}`}>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.22em]">{label}</p>
-      <p className="mt-1.5 text-[1.6rem] font-semibold tracking-tight text-ink-900">{value}</p>
-      <p className="mt-1 text-sm leading-5 text-slate-600">{note}</p>
+    <div className="summary-metric">
+      <p className="eyebrow-label">{label}</p>
+      <p className="mt-1.5 text-[1.35rem] font-semibold tracking-tight text-ink-900">{value}</p>
+      <p className="mt-1 text-xs leading-5 text-slate-500">{note}</p>
     </div>
   );
 }
 
 export function WatchlistPage() {
-  const { reminders, setWatchlistFocus, watchlist } = useWorkspaceState();
-  const [selectedTag, setSelectedTag] = useState("全部");
-  const [sortBy, setSortBy] = useState("focus");
+  const {
+    alertHistory,
+    trackedAnalyses,
+    toggleWatchlistTracking,
+    watchlistUniverse
+  } = useWorkspaceState();
+  const [query, setQuery] = useState("");
+  const [actionFilter, setActionFilter] = useState("all");
+  const [valuationFilter, setValuationFilter] = useState("all");
+  const [sortBy, setSortBy] = useState<SortKey>("score");
 
-  const filteredItems = watchlist.filter(
-    (item) => selectedTag === "全部" || item.tags.includes(selectedTag)
+  const filteredAnalyses = useMemo(() => {
+    const items = trackedAnalyses.filter((analysis) => {
+      const matchesQuery =
+        !query ||
+        analysis.stock.ticker.toLowerCase().includes(query.toLowerCase()) ||
+        analysis.stock.companyName.toLowerCase().includes(query.toLowerCase());
+      const matchesAction = actionFilter === "all" || analysis.decision.action === actionFilter;
+      const matchesValuation =
+        valuationFilter === "all" || analysis.decision.valuationStatus === valuationFilter;
+
+      return matchesQuery && matchesAction && matchesValuation;
+    });
+
+    return items.sort((left, right) => {
+      if (sortBy === "valuation") {
+        return right.valuationScore - left.valuationScore;
+      }
+
+      if (sortBy === "updated") {
+        return right.stock.lastReviewed.localeCompare(left.stock.lastReviewed);
+      }
+
+      return right.overallScore - left.overallScore;
+    });
+  }, [actionFilter, query, sortBy, trackedAnalyses, valuationFilter]);
+
+  const removedItems = watchlistUniverse.filter((item) => !item.isTracked);
+  const topStudy = trackedAnalyses.filter((analysis) => analysis.decision.action === "study_now");
+  const watchOnly = trackedAnalyses.filter((analysis) => analysis.decision.action === "watch");
+  const waitOrAvoid = trackedAnalyses.filter((analysis) =>
+    ["wait_for_better_price", "avoid_for_now"].includes(analysis.decision.action)
   );
-
-  const sortedItems = [...filteredItems].sort((left, right) => {
-    if (sortBy === "valuation") {
-      const order = {
-        偏高觀察: 0,
-        合理區間: 1,
-        低估待研究: 2
-      };
-
-      return order[left.valuationSignal] - order[right.valuationSignal];
-    }
-
-    if (sortBy === "reviewed") {
-      return left.lastReviewed.localeCompare(right.lastReviewed);
-    }
-
-    const order = {
-      本輪研究: 0,
-      等待事件: 1,
-      等待估值: 2,
-      維持追蹤: 3
-    };
-
-    if (left.focusState !== right.focusState) {
-      return order[left.focusState] - order[right.focusState];
-    }
-
-    return left.lastReviewed.localeCompare(right.lastReviewed);
-  });
-
-  const summaryCounts = {
-    focus: watchlist.filter((item) => item.focusState === "本輪研究").length,
-    event: watchlist.filter((item) => item.focusState === "等待事件").length,
-    valuation: watchlist.filter((item) => item.focusState === "等待估值").length,
-    passive: watchlist.filter((item) => item.focusState === "維持追蹤").length
-  };
-  const oldestReview = [...watchlist].sort((left, right) => left.lastReviewed.localeCompare(right.lastReviewed))[0]!;
-  const groupedBoards = focusStates.map((state) => ({
-    title: state,
-    tone: getFocusTone(state),
-    items: watchlist.filter((item) => item.focusState === state)
-  }));
 
   return (
     <div className="space-y-4">
       <PageHeader
         eyebrow="Watchlist"
-        title="觀察名單工作台"
-        description="觀察名單不是候選買點清單，而是研究隊列。先標記這輪要研究誰、等什麼事件、目前該做什麼。"
+        title="決策 Watchlist"
+        description="先回答哪些值得研究，哪些只能觀察，哪些先不要碰。"
         actions={
           <>
             <Link
-              to="/tracking"
-              className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-ink-900 transition hover:border-slate-400"
+              to="/"
+              className="toolbar-button border-slate-300 bg-white text-ink-900 hover:border-slate-400"
             >
-              看追蹤工作台
+              看市場總覽
             </Link>
             <Link
-              to="/stocks/MSFT"
-              className="rounded-lg border border-ink-900 bg-ink-900 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-ink-800"
+              to="/tracking"
+              className="toolbar-button border-ink-900 bg-ink-900 text-white hover:bg-ink-800"
             >
-              看個股分析
+              看 Alerts
             </Link>
           </>
         }
       />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_350px]">
-        <SectionBlock
-          title="研究隊列"
-          subtitle={`先看哪一檔該回到研究流程，篩選與排序都只服務 ${mockSnapshot.asOfDate} 的研究工作節奏。`}
-        >
-          <div className="mb-4 flex flex-col gap-3 border-b border-slate-200/75 pb-3 lg:flex-row lg:items-start lg:justify-between">
-            <div className="flex flex-wrap gap-2">
-              {allTags.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => setSelectedTag(tag)}
-                  className={`rounded-lg border px-3 py-2 text-sm transition ${
-                    selectedTag === tag
-                      ? "border-ink-900 bg-ink-900 text-white"
-                      : "border-slate-200 bg-white text-ink-900 hover:border-slate-300"
-                  }`}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-
-            <label className="flex items-center gap-3 text-sm text-slate-600">
-              排序方式
-              <select
-                value={sortBy}
-                onChange={(event) => setSortBy(event.target.value)}
-                className="field-shell w-[190px]"
-              >
-                <option value="focus">工作標記</option>
-                <option value="valuation">估值訊號</option>
-                <option value="reviewed">最久未檢查</option>
-              </select>
-            </label>
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.14fr)_320px]">
+        <section className="panel px-4 py-4 sm:px-5">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <SummaryMetric label="值得研究" value={topStudy.length} note={topStudy.map((item) => item.stock.ticker).join("、") || "目前無"} />
+            <SummaryMetric label="持續觀察" value={watchOnly.length} note={watchOnly.map((item) => item.stock.ticker).join("、") || "目前無"} />
+            <SummaryMetric label="先不要碰" value={waitOrAvoid.length} note={waitOrAvoid.map((item) => item.stock.ticker).join("、") || "目前無"} />
           </div>
 
-          <div className="space-y-3">
-            {sortedItems.map((item) => {
-              const nextReminder = reminders
-                .filter((reminder) => reminder.ticker === item.ticker && reminder.progress !== "已完成")
-                .sort((left, right) => left.date.localeCompare(right.date))[0];
-
-              return (
-                <article key={item.id} className="rounded-xl border border-slate-200/75 bg-white/84 px-4 py-4">
-                  <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.82fr)_190px] xl:items-start">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-base font-semibold text-ink-900">
-                          {item.companyName} ({item.ticker})
-                        </p>
-                        <Badge tone={getFocusTone(item.focusState)}>{item.focusState}</Badge>
-                        <Badge tone={getSignalTone(item.valuationSignal)}>{item.valuationSignal}</Badge>
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-slate-700">{item.nextCatalyst}</p>
-                      <p className="mt-1 text-sm text-slate-500">最近檢查 {formatDate(item.lastReviewed)}</p>
-
-                      <div className="mt-3 rounded-lg border border-slate-200/75 bg-slate-50/70 px-3.5 py-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                          現在該做什麼
-                        </p>
-                        <p className="mt-1.5 text-sm leading-6 text-ink-900">{getResearchAction(item)}</p>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <div className="rounded-lg border border-slate-200/75 bg-slate-50/70 px-3.5 py-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                          下一個事件
-                        </p>
-                        {nextReminder ? (
-                          <>
-                            <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                              <Badge tone={getReminderTone(nextReminder.type)}>{nextReminder.type}</Badge>
-                              <p className="text-sm font-medium text-ink-900">{nextReminder.title}</p>
-                            </div>
-                            <p className="mt-2 text-sm text-slate-700">{formatDate(nextReminder.date)}</p>
-                          </>
-                        ) : (
-                          <p className="mt-1.5 text-sm leading-6 text-slate-700">目前沒有排入提醒。</p>
-                        )}
-                      </div>
-
-                      <div className="rounded-lg border border-slate-200/75 bg-white/80 px-3.5 py-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                          估值與品質
-                        </p>
-                        <p className="mt-1.5 text-sm font-medium text-ink-900">目標區間 {item.targetRange}</p>
-                        <p className="mt-1 text-sm text-slate-700">現價 {formatCurrency(item.currentPrice)}</p>
-                        <p className="mt-1 text-sm text-slate-700">品質分數 {item.qualityScore.toFixed(1)} / 10</p>
-                      </div>
-
-                      <div className="rounded-lg border border-slate-200/75 bg-white/80 px-3.5 py-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                          工作標記
-                        </p>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {focusStates.map((focusState) => (
-                            <button
-                              key={`${item.id}-${focusState}`}
-                              type="button"
-                              onClick={() => setWatchlistFocus(item.id, focusState)}
-                              className={`rounded-lg border px-3 py-2 text-sm transition ${
-                                item.focusState === focusState
-                                  ? "border-ink-900 bg-ink-900 text-white"
-                                  : "border-slate-200 bg-white text-ink-900 hover:border-slate-300"
-                              }`}
-                            >
-                              {focusState}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <Link
-                        to={`/stocks/${item.ticker}`}
-                        className="inline-flex items-center justify-center rounded-lg border border-ink-900 bg-ink-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-ink-800"
-                      >
-                        看個股
-                      </Link>
-                      <Link
-                        to={`/thesis/${item.ticker}`}
-                        className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-ink-900 transition hover:border-slate-400"
-                      >
-                        看 Thesis
-                      </Link>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
+          <div className="mt-4 grid gap-3 border-t border-slate-200/75 pt-4 lg:grid-cols-[minmax(0,1fr)_170px_170px_140px]">
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="搜尋 ticker / 公司名"
+              className="field-shell"
+            />
+            <select value={actionFilter} onChange={(event) => setActionFilter(event.target.value)} className="field-shell">
+              <option value="all">全部 action</option>
+              <option value="study_now">值得研究</option>
+              <option value="watch">持續觀察</option>
+              <option value="wait_for_better_price">等更佳價格</option>
+              <option value="avoid_for_now">先不要碰</option>
+              <option value="insufficient_data">資料不足</option>
+            </select>
+            <select
+              value={valuationFilter}
+              onChange={(event) => setValuationFilter(event.target.value)}
+              className="field-shell"
+            >
+              <option value="all">全部估值</option>
+              <option value="undervalued">低估</option>
+              <option value="fair">合理</option>
+              <option value="overvalued">高估</option>
+              <option value="insufficient_data">資料不足</option>
+            </select>
+            <select value={sortBy} onChange={(event) => setSortBy(event.target.value as SortKey)} className="field-shell">
+              <option value="score">依分數</option>
+              <option value="valuation">依估值分數</option>
+              <option value="updated">依更新時間</option>
+            </select>
           </div>
-        </SectionBlock>
+        </section>
 
         <aside className="panel px-4 py-4 sm:px-5">
-          <div className="border-b border-slate-200/75 pb-2.5">
-            <h2 className="section-title">關鍵狀態</h2>
-            <p className="mt-1 muted-copy">先看本輪研究量、等待事件和等待估值的壓力。</p>
+          <div className="border-b border-slate-200/75 pb-3">
+            <h2 className="section-title">Alert state</h2>
+            <p className="mt-1 muted-copy">前端顯示的是規則觸發結果，不是即時推播。</p>
           </div>
-
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-            <SummaryMetric label="本輪研究" value={summaryCounts.focus} note="這輪要優先補研究的公司" tone="warning" />
-            <SummaryMetric label="等待事件" value={summaryCounts.event} note="先等財報或營收更新" tone="info" />
-            <SummaryMetric label="等待估值" value={summaryCounts.valuation} note="先等價格，不急著出手" tone="critical" />
-            <SummaryMetric label="維持追蹤" value={summaryCounts.passive} note="暫時沒有立即動作" />
-          </div>
-
-          <div className="mt-4 rounded-xl border border-slate-200/75 bg-white/80 px-4 py-3.5">
-            <p className="text-sm font-medium text-ink-900">目前篩選</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <Badge tone="default">{selectedTag}</Badge>
-              <Badge tone="default">
-                {sortBy === "focus" ? "工作標記" : sortBy === "valuation" ? "估值訊號" : "最久未檢查"}
-              </Badge>
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-xl border border-slate-200/75 bg-white/80 px-4 py-3.5">
-            <p className="text-sm font-medium text-ink-900">最久未檢查</p>
-            <p className="mt-2 text-base font-semibold text-ink-900">
-              {oldestReview.companyName} ({oldestReview.ticker})
-            </p>
-            <p className="mt-1 text-sm text-slate-600">最後檢查 {formatDate(oldestReview.lastReviewed)}</p>
-            <p className="mt-2 text-sm leading-6 text-slate-700">
-              如果最近沒有新的提醒，也要回頭確認商業模式、估值區間與風險假設是否仍有效。
-            </p>
+          <div className="mt-4">
+            <AlertList alerts={alertHistory.slice(0, 3)} emptyLabel="目前沒有新的 watchlist alerts。" />
           </div>
         </aside>
       </div>
 
-      <SectionBlock
-        title="按工作標記整理"
-        subtitle="把研究中的、等待事件的、等待估值的標的分開看，避免一張名單混在一起。"
-      >
-        <div className="grid gap-4 lg:grid-cols-4">
-          {groupedBoards.map((group) => (
-            <div key={group.title} className="rounded-xl border border-slate-200/75 bg-white/84 px-4 py-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge tone={group.tone}>{group.title}</Badge>
-                <p className="text-sm font-semibold text-ink-900">{group.items.length} 檔</p>
-              </div>
+      <SectionBlock title="決策清單" subtitle="每列都直接回答現在該不該升級研究。">
+        <div className="space-y-0 divide-y divide-slate-200/75">
+          {filteredAnalyses.map((analysis) => {
+            const actionDisplay = getActionDisplay(analysis.decision.action);
+            const valuationDisplay = getValuationDisplay(analysis.decision.valuationStatus);
+            const confidenceDisplay = getConfidenceDisplay(analysis.decision.confidenceLevel);
+            const topAlert = analysis.alerts[0];
 
-              <div className="mt-4 space-y-3">
-                {group.items.map((item) => (
-                  <div key={item.id} className="rounded-lg border border-slate-200/75 bg-slate-50/70 px-3.5 py-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-medium text-ink-900">
-                        {item.companyName} ({item.ticker})
-                      </p>
-                      <p className="text-sm text-slate-500">{formatDate(item.lastReviewed)}</p>
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-slate-700">{getResearchAction(item)}</p>
+            return (
+              <article key={analysis.stock.id} className="grid gap-4 py-4 xl:grid-cols-[160px_110px_110px_120px_150px_minmax(0,1fr)_200px] xl:items-start">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-ink-900">{analysis.stock.ticker}</p>
+                  <p className="mt-1 text-sm text-slate-600">{analysis.stock.companyName}</p>
+                  <p className="mt-1 text-xs text-slate-500">更新於 {formatDate(analysis.stock.lastReviewed)}</p>
+                </div>
+
+                <div>
+                  <p className="eyebrow-label">Overall</p>
+                  <p className="mt-1.5 text-[1.15rem] font-semibold tracking-tight text-ink-900">{analysis.overallScore}</p>
+                  <p className="mt-1 text-xs text-slate-500">Buffett {analysis.decision.buffettFit.toFixed(0)}</p>
+                  <p className="text-xs text-slate-500">Lynch {analysis.decision.lynchFit.toFixed(0)}</p>
+                </div>
+
+                <div>
+                  <p className="eyebrow-label">Valuation</p>
+                  <div className="mt-1.5">
+                    <DecisionPill label={valuationDisplay.label} tone={valuationDisplay.tone} />
                   </div>
-                ))}
-              </div>
-            </div>
-          ))}
+                </div>
+
+                <div>
+                  <p className="eyebrow-label">Action</p>
+                  <div className="mt-1.5">
+                    <DecisionPill label={actionDisplay.label} tone={actionDisplay.tone} />
+                  </div>
+                </div>
+
+                <div>
+                  <p className="eyebrow-label">Alert state</p>
+                  <div className="mt-1.5 flex flex-wrap gap-2">
+                    {topAlert ? (
+                      <DecisionPill label={topAlert.state === "active" ? "Active" : "Monitoring"} tone={topAlert.severity} />
+                    ) : (
+                      <DecisionPill label="Clear" tone="neutral" />
+                    )}
+                    <DecisionPill label={`信心 ${confidenceDisplay.label}`} tone={confidenceDisplay.tone} />
+                  </div>
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-ink-900">{analysis.decision.summary}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-700">
+                    <span className="font-medium text-ink-900">Why now:</span> {analysis.decision.whyNow}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    <span className="font-medium text-ink-900">Why not now:</span> {analysis.decision.whyNotNow}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Link
+                    to={`/stocks/${analysis.stock.ticker}`}
+                    className="toolbar-button border-ink-900 bg-ink-900 text-white hover:bg-ink-800"
+                  >
+                    看個股
+                  </Link>
+                  <Link
+                    to={`/thesis/${analysis.stock.ticker}`}
+                    className="toolbar-button border-slate-300 bg-white text-ink-900 hover:border-slate-400"
+                  >
+                    看 Thesis
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => toggleWatchlistTracking(analysis.workspaceWatchlist?.id ?? "")}
+                    className="toolbar-button border-transparent bg-transparent text-slate-600 hover:border-slate-200 hover:bg-white"
+                  >
+                    移出 watchlist
+                  </button>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </SectionBlock>
+
+      {removedItems.length ? (
+        <SectionBlock title="未追蹤名單" subtitle="移出後仍保留在本地 universe，可隨時加回。">
+          <div className="grid gap-3 lg:grid-cols-2">
+            {removedItems.map((item) => (
+              <article key={item.id} className="decision-panel flex items-center justify-between gap-3 px-4 py-3.5">
+                <div>
+                  <p className="text-sm font-semibold text-ink-900">
+                    {item.ticker} {item.companyName}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">{item.nextCatalyst}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleWatchlistTracking(item.id)}
+                  className="toolbar-button border-slate-300 bg-white text-ink-900 hover:border-slate-400"
+                >
+                  加回 watchlist
+                </button>
+              </article>
+            ))}
+          </div>
+        </SectionBlock>
+      ) : null}
     </div>
   );
 }

@@ -7,7 +7,7 @@ interface MetricCardProps {
 
 const toneMap = {
   default: "border-slate-200/80 bg-white/85",
-  positive: "border-emerald-200/80 bg-emerald-50/55",
+  positive: "border-emerald-200/80 bg-emerald-50/[0.55]",
   warning: "border-amber-200/85 bg-amber-50/60"
 };
 

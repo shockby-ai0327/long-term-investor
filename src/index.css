@@ -46,8 +46,16 @@ select {
     @apply rounded-[14px] border border-slate-200/75 bg-[rgba(255,255,255,0.88)] shadow-[0_10px_18px_-20px_rgba(15,23,42,0.2)];
   }
 
+  .decision-panel {
+    @apply rounded-[14px] border border-slate-200/75 bg-white/[0.86];
+  }
+
   .section-title {
     @apply text-[1rem] font-semibold leading-6 tracking-tight text-ink-900;
+  }
+
+  .eyebrow-label {
+    @apply text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500;
   }
 
   .muted-copy {
@@ -55,11 +63,23 @@ select {
   }
 
   .surface-line {
-    @apply border border-slate-200/75 bg-white/78;
+    @apply border border-slate-200/75 bg-white/[0.78];
   }
 
   .field-shell {
     @apply rounded-lg border border-slate-200 bg-white/75 px-3.5 py-2.5 text-sm text-ink-900 outline-none transition duration-200 focus:border-sage-500 focus:bg-white focus:ring-2 focus:ring-sage-500/15;
+  }
+
+  .table-row {
+    @apply grid gap-3 border-b border-slate-200/75 py-3 last:border-b-0 last:pb-0 first:pt-0;
+  }
+
+  .summary-metric {
+    @apply rounded-lg border border-slate-200/75 bg-white/[0.84] px-3.5 py-3;
+  }
+
+  .toolbar-button {
+    @apply inline-flex items-center justify-center rounded-lg border px-3 py-2 text-sm font-medium transition;
   }
 }
 

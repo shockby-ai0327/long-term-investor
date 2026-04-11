@@ -176,7 +176,7 @@ export function PortfolioPage() {
         >
           <div className="space-y-3">
             {portfolioAttention.map((item) => (
-              <article key={item.id} className="rounded-xl border border-slate-200/75 bg-white/84 px-4 py-3.5">
+              <article key={item.id} className="rounded-xl border border-slate-200/75 bg-white/[0.84] px-4 py-3.5">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge tone={item.tone}>{item.label}</Badge>
                   <h3 className="text-sm font-semibold text-ink-900">{item.title}</h3>
@@ -257,7 +257,7 @@ export function PortfolioPage() {
       >
         <div className="space-y-3">
           {holdingsWithReminders.map(({ holding, nextReminder }) => (
-            <article key={holding.id} className="rounded-xl border border-slate-200/75 bg-white/84 px-4 py-4">
+            <article key={holding.id} className="rounded-xl border border-slate-200/75 bg-white/[0.84] px-4 py-4">
               <div className="grid gap-4 xl:grid-cols-[minmax(0,1.02fr)_minmax(0,0.9fr)_176px] xl:items-start">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
@@ -383,7 +383,7 @@ export function PortfolioPage() {
       >
         <div className="grid gap-3 md:grid-cols-2">
           {portfolioNotes.map((note) => (
-            <div key={note} className="rounded-xl border border-slate-200/75 bg-white/84 px-4 py-4">
+            <div key={note} className="rounded-xl border border-slate-200/75 bg-white/[0.84] px-4 py-4">
               <p className="text-sm leading-6 text-slate-700">{note}</p>
             </div>
           ))}

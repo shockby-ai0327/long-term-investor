@@ -194,11 +194,15 @@ export interface WorkspaceReminder extends EventReminder {
 export interface WatchlistWorkspaceState {
   focusState: WatchlistFocusState;
   updatedAt: string;
+  isTracked?: boolean;
+  trackingUpdatedAt?: string;
 }
 
 export interface WorkspaceWatchlistItem extends WatchlistItem {
   focusState: WatchlistFocusState;
   focusUpdatedAt?: string;
+  isTracked: boolean;
+  trackingUpdatedAt?: string;
 }
 
 export interface MarketSummaryItem {

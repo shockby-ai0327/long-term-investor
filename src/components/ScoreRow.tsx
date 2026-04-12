@@ -18,7 +18,7 @@ export function ScoreRow({
   tone = score >= 75 ? "positive" : score >= 55 ? "neutral" : "negative"
 }: ScoreRowProps) {
   return (
-    <div className="grid gap-2 border-b border-slate-200/75 py-3 last:border-b-0 last:pb-0 first:pt-0 sm:grid-cols-[156px_minmax(0,1fr)_62px] sm:items-center">
+    <div className="grid gap-2 border-b border-slate-200/75 py-2.5 last:border-b-0 last:pb-0 first:pt-0 sm:grid-cols-[152px_minmax(0,1fr)_58px] sm:items-center">
       <div>
         <p className="text-sm font-medium text-ink-900">{label}</p>
         {note ? <p className="mt-1 text-xs leading-5 text-slate-500">{note}</p> : null}

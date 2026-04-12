@@ -271,7 +271,7 @@ export function scoreValuation(stock: Stock, targetZoneScore: number) {
       label: "價格區間",
       score: targetZoneScore,
       weight: 20,
-      detail: "以既有 watchlist target range 作為價格位置參考。"
+      detail: "以既有觀察名單研究區間作為價格位置參考。"
     }
   ];
 

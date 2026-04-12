@@ -43,11 +43,11 @@ select {
 
 @layer components {
   .panel {
-    @apply rounded-xl border border-slate-200/80 bg-[rgba(255,255,255,0.86)] shadow-[0_10px_24px_-24px_rgba(15,23,42,0.22)];
+    @apply rounded-xl border border-slate-200/80 bg-[rgba(255,255,255,0.86)] shadow-[0_10px_24px_-26px_rgba(15,23,42,0.2)];
   }
 
   .decision-panel {
-    @apply rounded-[12px] border border-slate-200/75 bg-white/[0.78];
+    @apply rounded-[11px] border border-slate-200/75 bg-white/[0.78];
   }
 
   .section-title {
@@ -75,7 +75,7 @@ select {
   }
 
   .summary-metric {
-    @apply rounded-lg border border-slate-200/75 bg-white/[0.82] px-3.5 py-3;
+    @apply rounded-lg border border-slate-200/75 bg-white/[0.82] px-3.5 py-2.5;
   }
 
   .toolbar-button {
@@ -83,11 +83,11 @@ select {
   }
 
   .shell-statusbar {
-    @apply flex flex-wrap gap-2 rounded-xl border border-slate-200/80 bg-white/[0.72] px-3 py-2;
+    @apply flex flex-wrap gap-1.5 rounded-xl border border-slate-200/80 bg-white/[0.72] px-2.5 py-1.5;
   }
 
   .shell-statusitem {
-    @apply flex min-w-[180px] flex-1 items-center gap-2 rounded-lg border border-slate-200/75 bg-white/[0.72] px-3 py-2;
+    @apply flex min-w-[160px] flex-1 items-center gap-2 rounded-lg border border-slate-200/75 bg-white/[0.72] px-2.5 py-1.5;
   }
 
   .workspace-rail {
@@ -95,7 +95,7 @@ select {
   }
 
   .decision-row {
-    @apply grid gap-3 border-b border-slate-200/75 py-3.5 last:border-b-0 last:pb-0 first:pt-0;
+    @apply grid gap-3 border-b border-slate-200/75 py-3 last:border-b-0 last:pb-0 first:pt-0;
   }
 
   .decision-strip {
@@ -116,6 +116,18 @@ select {
 
   .symbol-chip {
     @apply rounded-md border border-transparent px-3 py-2 text-left transition duration-150;
+  }
+
+  .bar-track {
+    @apply h-1.5 rounded-full bg-slate-100;
+  }
+
+  .bar-fill {
+    @apply h-full rounded-full bg-ink-900;
+  }
+
+  .compact-note {
+    @apply text-[11px] leading-5 text-slate-500;
   }
 }
 

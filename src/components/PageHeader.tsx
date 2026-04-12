@@ -26,9 +26,9 @@ export function PageHeader({
   if (variant === "research") {
     return (
       <header className={`panel px-4 py-4 sm:px-5 ${className}`}>
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="min-w-0">
-            <div className="flex flex-col gap-3 border-b border-slate-200/75 pb-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-start">
+          <div className="min-w-0 xl:h-fit xl:flex-1 xl:self-start">
+            <div className="flex flex-col gap-3 border-b border-slate-200/75 pb-3.5 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
                 <p className="eyebrow-label">{eyebrow}</p>
                 <h1 className="mt-1.5 text-balance break-words text-[1.56rem] font-semibold leading-tight tracking-[-0.03em] text-ink-900 sm:text-[2rem]">
@@ -53,7 +53,7 @@ export function PageHeader({
           </div>
 
           {aside ? (
-            <div className="border-t border-slate-200/75 pt-4 xl:border-l xl:border-t-0 xl:pl-5 xl:pt-0">
+            <div className="border-t border-slate-200/75 pt-4 xl:h-fit xl:w-[320px] xl:shrink-0 xl:self-start xl:border-l xl:border-t-0 xl:pl-5 xl:pt-0">
               {aside}
             </div>
           ) : null}
@@ -63,8 +63,8 @@ export function PageHeader({
   }
 
   return (
-    <header className={`mb-3 ${className}`}>
-      <div className="flex flex-col gap-3 border-b border-slate-200/75 pb-3 lg:flex-row lg:items-end lg:justify-between">
+    <header className={`mb-2.5 ${className}`}>
+      <div className="flex flex-col gap-3 border-b border-slate-200/75 pb-2.5 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-3xl">
           <p className="eyebrow-label">{eyebrow}</p>
           <h1 className="mt-1 text-balance text-[1.46rem] font-semibold leading-tight tracking-tight text-ink-900 sm:text-[1.72rem]">

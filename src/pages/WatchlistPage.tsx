@@ -249,7 +249,7 @@ export function WatchlistPage() {
     });
   }, [actionFilter, query, rankedAnalyses, sortBy, valuationFilter]);
 
-  const priorityIdeas = rankedAnalyses.slice(0, 2);
+  const priorityIdeas = rankedAnalyses.slice(0, 3);
   const leadingIdea = priorityIdeas[0];
   const priorityDisplay = leadingIdea ? getPriorityPanelDisplay(leadingIdea) : null;
 
@@ -296,14 +296,14 @@ export function WatchlistPage() {
               to="/"
               className="toolbar-button border-ink-900 bg-ink-900 text-white hover:bg-ink-800"
             >
-              市場總覽
+              回決策總覽
             </Link>
           </>
         }
       />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_300px]">
-        <section className="panel px-4 py-4 sm:px-5">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
+        <section className="panel h-fit self-start px-4 py-4 sm:px-5 xl:min-w-0 xl:flex-[1.2]">
           <div className="flex flex-col gap-3 border-b border-slate-200/75 pb-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
               <p className="eyebrow-label">本輪優先關注</p>
@@ -317,7 +317,7 @@ export function WatchlistPage() {
             <div className="decision-strip">
               <span>完整名單 {trackedAnalyses.length} 檔</span>
               <span>•</span>
-              <span>首要目標是決定先研究誰，而不是先處理管理欄位</span>
+              <span>先決定研究順序，再往下看完整名單</span>
             </div>
           </div>
 
@@ -328,7 +328,7 @@ export function WatchlistPage() {
           </div>
         </section>
 
-        <aside className="workspace-rail">
+        <aside className="workspace-rail h-fit self-start xl:w-[300px] xl:shrink-0">
           <div className="border-b border-slate-200/75 pb-3">
             <p className="eyebrow-label">決策分層</p>
             <p className="mt-1 text-sm leading-6 text-slate-600">先分出研究優先級，再決定是否往下展開。</p>
@@ -406,7 +406,7 @@ export function WatchlistPage() {
         </div>
       </section>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-start">
         <div className="space-y-5">
           {groupedRows.map((group) => (
             <SectionBlock
@@ -431,7 +431,7 @@ export function WatchlistPage() {
           ))}
         </div>
 
-        <aside className="space-y-4">
+        <aside className="space-y-4 xl:h-fit xl:self-start">
           <div className="workspace-rail">
             <div className="border-b border-slate-200/75 pb-3">
               <p className="eyebrow-label">次要提醒</p>

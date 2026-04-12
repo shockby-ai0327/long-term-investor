@@ -38,6 +38,14 @@ export function StockDetailPage() {
     analysis.decision.topNegativeDrivers[0] ??
     "目前沒有額外風險旗標。";
   const nextReminder = analysis.reminders[0];
+  const targetZoneValue =
+    typeof analysis.decision.targetZone.low === "number" && typeof analysis.decision.targetZone.high === "number"
+      ? `${analysis.decision.targetZone.low.toFixed(0)} - ${analysis.decision.targetZone.high.toFixed(0)}`
+      : analysis.decision.targetZone.label;
+  const targetZoneHint =
+    typeof analysis.decision.targetZone.low === "number" && typeof analysis.decision.targetZone.high === "number"
+      ? `${analysis.decision.targetZone.currency ?? stock.currency} 研究區間`
+      : analysis.decision.currentPosition.label;
 
   return (
     <div className="space-y-4">
@@ -85,6 +93,11 @@ export function StockDetailPage() {
               hint={analysis.decision.currentPosition.label}
             />
             <MetricCard
+              label="市值"
+              value={formatBillion(stock.marketCapBillion, stock.currency)}
+              hint={stock.market}
+            />
+            <MetricCard
               label="總分"
               value={analysis.overallScore.toFixed(0)}
               hint={actionDisplay.label}
@@ -95,6 +108,11 @@ export function StockDetailPage() {
               value={valuationDisplay.label}
               hint={analysis.decision.currentPosition.valueLabel}
               tone={valuationDisplay.tone === "positive" ? "positive" : valuationDisplay.tone === "negative" ? "warning" : "default"}
+            />
+            <MetricCard
+              label="研究區間"
+              value={targetZoneValue}
+              hint={targetZoneHint}
             />
             <MetricCard label="Buffett" value={analysis.decision.buffettFit.toFixed(0)} hint={buffettDisplay.label} />
             <MetricCard label="Lynch" value={analysis.decision.lynchFit.toFixed(0)} hint={lynchDisplay.label} />

@@ -34,8 +34,8 @@ export function AlertList({
           key={alert.id}
           className={
             variant === "compact"
-              ? "border-b border-slate-200/75 py-3 first:pt-0 last:border-b-0 last:pb-0"
-              : "rounded-lg border border-slate-200/80 bg-white/[0.84] px-4 py-3.5"
+              ? "border-b border-slate-200/75 py-2.5 first:pt-0 last:border-b-0 last:pb-0"
+              : "rounded-lg border border-slate-200/80 bg-white/[0.84] px-4 py-3"
           }
         >
           <div className="flex flex-wrap items-center gap-2">
@@ -48,14 +48,14 @@ export function AlertList({
           <div className={`mt-2 flex flex-col gap-2 ${variant === "compact" ? "xl:flex-row xl:items-start xl:justify-between" : "lg:flex-row lg:items-start lg:justify-between"}`}>
             <div className="min-w-0">
               <h3 className="text-sm font-semibold text-ink-900">{alert.title}</h3>
-              <p className="mt-1 text-sm leading-6 text-slate-600">{alert.summary}</p>
+              <p className={`mt-1 ${variant === "compact" ? "text-xs leading-5 text-slate-600" : "text-sm leading-6 text-slate-600"}`}>{alert.summary}</p>
               {variant === "default" ? (
                 <p className="mt-1 text-xs leading-5 text-slate-500">{alert.reason}</p>
               ) : null}
             </div>
             <Link
               to={alert.actionTo}
-              className="toolbar-button shrink-0 border-slate-300 bg-white text-ink-900 hover:border-slate-400"
+              className={`toolbar-button shrink-0 border-slate-300 bg-white text-ink-900 hover:border-slate-400 ${variant === "compact" ? "px-2.5 py-1.5 text-xs" : ""}`}
             >
               {alert.actionLabel}
             </Link>

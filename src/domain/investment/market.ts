@@ -81,10 +81,10 @@ export function evaluateMarketEnvironment(analyses: StockAnalysisRecord[]): Mark
       confidenceLevel,
       limitedSnapshot,
       summary: "可用樣本與資料覆蓋不足，先把判斷維持在有限快照層級。",
-      posture: "limited snapshot / insufficient_data",
+      posture: "有限快照 / 資料不足",
       buffettView: "資料不足，暫不對 Buffett 風格做過強解讀。",
       lynchView: "資料不足，暫不對 Lynch 風格做過強解讀。",
-      recommendations: ["先補足個股資料與 target zone，再提高自動結論權重。"],
+      recommendations: ["先補足個股資料與研究區間，再提高自動結論權重。"],
       heuristics,
       topIdeas: []
     };
@@ -145,10 +145,10 @@ export function evaluateMarketEnvironment(analyses: StockAnalysisRecord[]): Mark
     lynchView,
     recommendations:
       state === "risk_on"
-        ? ["優先研究 study_now 名單。", "估值合理帶內可分批研究，不追逐最強敘事。"]
+        ? ["優先研究值得研究名單。", "估值合理帶內可分批研究，不追逐最強敘事。"]
         : state === "defensive"
           ? ["先保留現金與等待名單。", "品質高但估值過熱的標的不升級研究。"]
-          : ["先把 watch 名單排序。", "用 alert 與 target zone 管節奏，而不是擴張持股數。"],
+          : ["先把持續觀察名單排序。", "用提醒與研究區間管節奏，而不是擴張持股數。"],
     heuristics,
     topIdeas
   };

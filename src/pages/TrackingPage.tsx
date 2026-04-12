@@ -82,40 +82,40 @@ function getReminderSortValue(reminder: WorkspaceReminder) {
 function getAlertImpact(alert: InvestmentAlert) {
   switch (alert.rule) {
     case "target_zone":
-      return "估值判斷與研究優先序";
+      return "會改變估值與研究優先序。";
     case "valuation_status_change":
-      return "估值狀態與 watchlist 動作";
+      return "會改變估值狀態與觀察名單動作。";
     case "overall_score_change":
-      return "綜合判斷與研究順序";
+      return "會改變研究順序與持有判斷強度。";
     case "stability_deterioration":
-      return "風險判斷與部位耐受度";
+      return "會改變風險容忍度與部位耐受度。";
     case "data_update_reprice":
-      return "Thesis 與評分重估";
+      return "會改變投資假設與評分拆解。";
     case "style_fit":
-      return "研究框架與 thesis 重點";
+      return "會改變研究框架與 thesis 聚焦點。";
     default:
-      return "決策順序";
+      return "會改變本輪處理順序。";
   }
 }
 
 function getAlertNextStep(alert: InvestmentAlert, analysis: StockAnalysisRecord) {
   switch (alert.rule) {
     case "target_zone":
-      return "回到估值區與 Thesis，確認是否把它升級成優先研究。";
+      return "先回到估值區與投資假設，確認是否升級成優先研究。";
     case "valuation_status_change":
-      return "先看估值區間與 fair zone，再決定要不要調整觀察狀態。";
+      return "先看 fair zone 與目前價格位置，再決定是否調整觀察狀態。";
     case "overall_score_change":
-      return "打開評分拆解，確認這次變動是否真的改變持有或研究理由。";
+      return "打開評分拆解，確認這次變動是否真的改變研究理由。";
     case "stability_deterioration":
-      return "優先回頭看風險與集中度，必要時降低對這檔的容忍區間。";
+      return "優先處理風險與集中度，不把舊結論視為理所當然。";
     case "data_update_reprice":
-      return "把事件後的變化寫回 Thesis，避免只根據 headline 做判斷。";
+      return "把事件後變化寫回投資假設，避免只跟著 headline 反應。";
     case "style_fit":
       return analysis.decision.buffettFit >= analysis.decision.lynchFit
-        ? "用品質與資本配置角度重看 Thesis，不要把題材敘事放前面。"
-        : "把研究重點放回成長與估值配比，而不是只看公司品質。";
+        ? "回到品質、資本配置與護城河，不把題材敘事放前面。"
+        : "回到成長與估值配比，確認 thesis 是否仍有合理報酬。";
     default:
-      return "先回到個股頁確認這次提醒真正改變了哪個判斷。";
+      return "先回個股頁，確認這則提醒真正改變哪個判斷。";
   }
 }
 
@@ -124,7 +124,7 @@ function getSecondaryAction(alert: InvestmentAlert, analysis: StockAnalysisRecor
   const thesisTo = `/thesis/${analysis.stock.ticker}`;
 
   if (alert.actionTo === stockTo) {
-    return { label: "看 Thesis", to: thesisTo, tone: "secondary" as const };
+    return { label: "看投資假設", to: thesisTo, tone: "secondary" as const };
   }
 
   if (alert.actionTo === thesisTo) {
@@ -136,17 +136,17 @@ function getSecondaryAction(alert: InvestmentAlert, analysis: StockAnalysisRecor
 
 function getAlertPriorityValue(alert: InvestmentAlert, analysis: StockAnalysisRecord) {
   const stateRank = alert.state === "active" ? 0 : 100;
-  const severityRank = alert.severity === "negative" ? 0 : alert.severity === "positive" ? 20 : 40;
+  const severityRank = alert.severity === "negative" ? 0 : alert.severity === "positive" ? 18 : 36;
   const actionRank =
     analysis.decision.action === "avoid_for_now"
       ? 0
       : analysis.decision.action === "wait_for_better_price"
-        ? 10
+        ? 8
         : analysis.decision.action === "study_now"
-          ? 20
+          ? 16
           : analysis.decision.action === "watch"
-            ? 30
-            : 40;
+            ? 24
+            : 32;
 
   return stateRank + severityRank + actionRank - analysis.overallScore / 100;
 }
@@ -172,11 +172,7 @@ function ActionLink({
   return (
     <Link
       to={to}
-      className={[
-        "toolbar-button",
-        fullWidth ? "w-full" : "",
-        className
-      ].join(" ")}
+      className={["toolbar-button", fullWidth ? "w-full" : "", className].join(" ")}
     >
       {label}
     </Link>
@@ -195,7 +191,7 @@ function SummaryMetric({
   return (
     <div className="summary-metric">
       <p className="eyebrow-label">{label}</p>
-      <p className="mt-1.5 text-[1.35rem] font-semibold tracking-tight text-ink-900">{value}</p>
+      <p className="mt-1 text-[1.3rem] font-semibold tracking-tight text-ink-900">{value}</p>
       <p className="mt-1 text-xs leading-5 text-slate-500">{note}</p>
     </div>
   );
@@ -215,7 +211,7 @@ function ReminderProgressButtons({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
-        <DecisionPill label={reminder.progress} tone={getReminderProgressTone(reminder.progress)} />
+        <DecisionPill label={reminder.progress} tone={getReminderProgressTone(reminder.progress)} size="sm" />
         {reminder.progressUpdatedAt ? (
           <p className="text-xs text-slate-500">更新於 {formatDate(reminder.progressUpdatedAt)}</p>
         ) : null}
@@ -271,47 +267,36 @@ function AlertQueueRow({
   const secondaryAction = getSecondaryAction(alert, analysis);
 
   return (
-    <article className="rounded-xl border border-slate-200/75 bg-white/[0.86] px-4 py-4">
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)_184px] xl:items-start">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg border border-slate-300 bg-white text-sm font-semibold text-ink-900">
-              {rank}
-            </span>
-            <DecisionPill label={severityDisplay.label} tone={severityDisplay.tone} />
-            <DecisionPill label={stateDisplay.label} tone={stateDisplay.tone} />
-            <DecisionPill label={ruleDisplay.label} tone="info" />
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">{alert.ticker}</p>
-            <p className="text-xs text-slate-500">{formatDate(alert.triggeredAt)}</p>
-          </div>
+    <article className="decision-row xl:grid-cols-[56px_150px_minmax(0,1fr)_208px] xl:items-start">
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-sm font-semibold text-ink-900">
+        {rank}
+      </div>
 
-          <h3 className="mt-2 text-[1.02rem] font-semibold tracking-tight text-ink-900">{alert.title}</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-700">{alert.summary}</p>
-          <p className="mt-1.5 text-sm leading-6 text-slate-500">{alert.reason}</p>
+      <div>
+        <div className="flex flex-wrap gap-2">
+          <DecisionPill label={severityDisplay.label} tone={severityDisplay.tone} size="sm" />
+          <DecisionPill label={stateDisplay.label} tone={stateDisplay.tone} size="sm" />
         </div>
+        <p className="mt-2 text-sm font-semibold text-ink-900">{alert.ticker}</p>
+        <p className="mt-1 text-xs text-slate-500">{formatDate(alert.triggeredAt)}</p>
+      </div>
 
-        <div className="grid gap-2">
-          <div className="rounded-lg border border-slate-200/75 bg-slate-50/70 px-3.5 py-3">
-            <p className="eyebrow-label">目前判斷</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <DecisionPill label={actionDisplay.label} tone={actionDisplay.tone} />
-              <DecisionPill label={valuationDisplay.label} tone={valuationDisplay.tone} />
-              <DecisionPill label={`信心 ${confidenceDisplay.label}`} tone={confidenceDisplay.tone} />
-            </div>
-            <p className="mt-2 text-sm leading-6 text-slate-700">{analysis.decision.summary}</p>
-          </div>
-
-          <div className="rounded-lg border border-slate-200/75 bg-white/80 px-3.5 py-3">
-            <p className="eyebrow-label">會改變什麼</p>
-            <p className="mt-1.5 text-sm font-medium text-ink-900">{getAlertImpact(alert)}</p>
-            <p className="mt-2 text-sm leading-6 text-slate-700">{getAlertNextStep(alert, analysis)}</p>
-          </div>
+      <div className="min-w-0">
+        <div className="flex flex-wrap gap-2">
+          <DecisionPill label={ruleDisplay.label} tone="info" size="sm" />
+          <DecisionPill label={actionDisplay.label} tone={actionDisplay.tone} size="sm" />
+          <DecisionPill label={valuationDisplay.label} tone={valuationDisplay.tone} size="sm" />
+          <DecisionPill label={`信心 ${confidenceDisplay.label}`} tone={confidenceDisplay.tone} size="sm" />
         </div>
+        <p className="mt-2 text-sm font-medium leading-6 text-ink-900">{alert.title}</p>
+        <p className="mt-1 text-sm leading-6 text-slate-700">{alert.summary}</p>
+        <p className="mt-1 text-xs leading-5 text-slate-600">{getAlertImpact(alert)}</p>
+        <p className="mt-1 text-xs leading-5 text-slate-500">{getAlertNextStep(alert, analysis)}</p>
+      </div>
 
-        <div className="flex flex-col gap-2">
-          <ActionLink label={alert.actionLabel} to={alert.actionTo} tone="primary" fullWidth />
-          <ActionLink label={secondaryAction.label} to={secondaryAction.to} fullWidth />
-        </div>
+      <div className="space-y-2">
+        <ActionLink label={alert.actionLabel} to={alert.actionTo} tone="primary" fullWidth />
+        <ActionLink label={secondaryAction.label} to={secondaryAction.to} fullWidth />
       </div>
     </article>
   );
@@ -332,60 +317,50 @@ function ReminderRow({
   const primaryAction = reminder.actions[0];
 
   return (
-    <article className="rounded-xl border border-slate-200/75 bg-white/[0.84] px-4 py-3.5">
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.04fr)_minmax(0,0.96fr)_176px] xl:items-start">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge tone={getReminderTypeTone(reminder.type)}>{reminder.type}</Badge>
-            <Badge tone={urgency.tone}>{urgency.label}</Badge>
-            <DecisionPill label={reminder.progress} tone={getReminderProgressTone(reminder.progress)} />
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">{reminder.ticker}</p>
-            <p className="text-xs text-slate-500">{formatDate(reminder.date)}</p>
-          </div>
-
-          <h3 className="mt-2 text-sm font-semibold text-ink-900">{reminder.title}</h3>
-          <p className="mt-1.5 text-sm leading-6 text-slate-700">{reminder.affectsDecision}</p>
+    <article className="decision-row xl:grid-cols-[156px_minmax(0,1fr)_220px] xl:items-start">
+      <div>
+        <div className="flex flex-wrap gap-2">
+          <Badge tone={getReminderTypeTone(reminder.type)}>{reminder.type}</Badge>
+          <Badge tone={urgency.tone}>{urgency.label}</Badge>
         </div>
+        <p className="mt-2 text-sm font-semibold text-ink-900">{reminder.ticker}</p>
+        <p className="mt-1 text-xs text-slate-500">{formatDate(reminder.date)}</p>
+      </div>
 
-        <div className="grid gap-2">
-          <div className="rounded-lg border border-slate-200/75 bg-slate-50/70 px-3.5 py-3">
-            <p className="eyebrow-label">驗證焦點</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {reminder.verificationFocus.slice(0, 2).map((focus) => (
-                <span
-                  key={focus}
-                  className="rounded-lg border border-slate-200/75 bg-white px-3 py-1.5 text-sm text-slate-700"
-                >
-                  {focus}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-lg border border-slate-200/75 bg-white/80 px-3.5 py-3">
-            <p className="eyebrow-label">下一步</p>
-            <p className="mt-1.5 text-sm leading-6 text-slate-700">{reminder.nextStep}</p>
-          </div>
-          <ReminderProgressButtons reminder={reminder} onStart={onStart} onComplete={onComplete} onReset={onReset} />
+      <div className="min-w-0">
+        <p className="text-sm font-medium leading-6 text-ink-900">{reminder.title}</p>
+        <p className="mt-1 text-xs leading-5 text-slate-600">{reminder.affectsDecision}</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {reminder.verificationFocus.slice(0, 2).map((focus) => (
+            <span
+              key={focus}
+              className="rounded-lg border border-slate-200/75 bg-white px-2.5 py-1 text-xs text-slate-700"
+            >
+              {focus}
+            </span>
+          ))}
         </div>
+        <p className="mt-2 text-xs leading-5 text-slate-500">{reminder.nextStep}</p>
+      </div>
 
-        <div className="flex flex-col gap-2">
-          {primaryAction ? (
-            <ActionLink
-              label={primaryAction.label}
-              to={primaryAction.to}
-              tone={primaryAction.emphasis ?? "primary"}
-              fullWidth
-            />
-          ) : null}
-          {reminder.actions[1] ? (
-            <ActionLink
-              label={reminder.actions[1].label}
-              to={reminder.actions[1].to}
-              tone={reminder.actions[1].emphasis ?? "secondary"}
-              fullWidth
-            />
-          ) : null}
-        </div>
+      <div className="space-y-2">
+        {primaryAction ? (
+          <ActionLink
+            label={primaryAction.label}
+            to={primaryAction.to}
+            tone={primaryAction.emphasis ?? "primary"}
+            fullWidth
+          />
+        ) : null}
+        {reminder.actions[1] ? (
+          <ActionLink
+            label={reminder.actions[1].label}
+            to={reminder.actions[1].to}
+            tone={reminder.actions[1].emphasis ?? "secondary"}
+            fullWidth
+          />
+        ) : null}
+        <ReminderProgressButtons reminder={reminder} onStart={onStart} onComplete={onComplete} onReset={onReset} />
       </div>
     </article>
   );
@@ -423,11 +398,6 @@ export function TrackingPage() {
     positive: alerts.filter((alert) => alert.severity === "positive").length,
     neutral: alerts.filter((alert) => alert.severity === "neutral").length
   };
-  const ruleCounts = {
-    valuation: alerts.filter((alert) => alert.rule === "target_zone" || alert.rule === "valuation_status_change").length,
-    score: alerts.filter((alert) => alert.rule === "overall_score_change" || alert.rule === "style_fit").length,
-    risk: alerts.filter((alert) => alert.rule === "stability_deterioration" || alert.rule === "data_update_reprice").length
-  };
   const actionDistribution = {
     study: trackedAnalyses.filter((analysis) => analysis.decision.action === "study_now").length,
     watch: trackedAnalyses.filter((analysis) => analysis.decision.action === "watch").length,
@@ -447,16 +417,16 @@ export function TrackingPage() {
   return (
     <div className="space-y-4">
       <PageHeader
-        eyebrow="Tracking"
-        title="決策追蹤工作台"
-        description="先處理規則已觸發的提醒，再排接下來的事件節奏。這一頁回答今天先看哪檔、為什麼、下一步做什麼。"
+        eyebrow="追蹤工作台"
+        title="今天要重新檢查什麼"
+        description="先處理會改變估值、風險與投資假設的提醒，再排接下來的事件節奏。"
         actions={
           <>
             <Link
               to="/watchlist"
               className="toolbar-button border-slate-300 bg-white text-ink-900 hover:border-slate-400"
             >
-              看 Watchlist
+              看觀察名單
             </Link>
             <Link
               to="/portfolio"
@@ -468,61 +438,61 @@ export function TrackingPage() {
         }
       />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_320px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_320px] xl:items-start">
         <SectionBlock
-          title="今日先處理"
-          subtitle={`依 ${mockSnapshot.asOfDate} snapshot 的 alert state 排序，先看會改變估值、風險與 thesis 的訊號。`}
+          title="今天先處理"
+          subtitle="先處理規則已經觸發的提醒，不先被所有事件與待辦淹沒。"
+          className="self-start"
         >
           {activeAlertItems.length ? (
-            <div className="space-y-3">
+            <div className="space-y-0 divide-y divide-slate-200/75">
               {activeAlertItems.slice(0, 4).map((item, index) => (
                 <AlertQueueRow key={item.alert.id} alert={item.alert} analysis={item.analysis} rank={index + 1} />
               ))}
             </div>
           ) : monitoringAlertItems.length ? (
-            <div className="rounded-xl border border-slate-200/75 bg-white/[0.82] px-4 py-4">
+            <div className="rounded-lg border border-slate-200/80 bg-white/[0.82] px-4 py-3.5">
               <p className="text-sm leading-6 text-slate-700">
-                目前沒有新的 active alert，先看最接近研究區間或需要持續監控的項目。
+                目前沒有新的主動提醒，先看最接近研究區間或需要持續監控的項目。
               </p>
-              <div className="mt-3">
+              <div className="mt-3 border-t border-slate-200/75 pt-3">
                 <AlertQueueRow alert={monitoringAlertItems[0]!.alert} analysis={monitoringAlertItems[0]!.analysis} rank={1} />
               </div>
             </div>
           ) : (
-            <div className="rounded-xl border border-slate-200/75 bg-white/[0.82] px-4 py-4 text-sm text-slate-600">
-              目前沒有新的 engine alerts。下一步請回到事件節奏，確認近期財報、營收與 Thesis 檢查節點。
+            <div className="rounded-lg border border-slate-200/80 bg-white/[0.82] px-4 py-3 text-sm text-slate-600">
+              目前沒有新的規則提醒。下一步請回到事件節奏，確認近期財報、營收與投資假設檢查點。
             </div>
           )}
         </SectionBlock>
 
-        <aside className="panel px-4 py-4 sm:px-5">
-          <div className="border-b border-slate-200/75 pb-3">
+        <aside className="workspace-rail self-start">
+          <div className="border-b border-slate-200/75 pb-2.5">
             <h2 className="section-title">關鍵狀態</h2>
-            <p className="mt-1 muted-copy">先掃過 alert 強度、7 天內事件，以及研究動作分布。</p>
+            <p className="mt-1 compact-note">先掃過今天要處理的量，再看事件密度與研究分布。</p>
           </div>
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-            <SummaryMetric label="需處理" value={activeAlertItems.length} note="現在要先處理的規則提醒" />
-            <SummaryMetric label="監控中" value={monitoringAlertItems.length} note="接近 trigger，但還在監控中" />
-            <SummaryMetric label="7 天內事件" value={withinAWeek.length} note="財報、營收與估值檢查節點" />
-            <SummaryMetric label="本地已完成" value={completedReminders.length} note="瀏覽器內已標記完成的提醒" />
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+            <SummaryMetric label="需處理" value={activeAlertItems.length} note="現在就要回頭檢查的提醒" />
+            <SummaryMetric label="監控中" value={monitoringAlertItems.length} note="接近觸發，但尚未升級" />
+            <SummaryMetric label="7 天內事件" value={withinAWeek.length} note="接下來一週的檢查節點" />
+            <SummaryMetric label="本地已完成" value={completedReminders.length} note="這台瀏覽器已標記完成" />
           </div>
 
           {nextWorkItem ? (
-            <div className="mt-4 rounded-xl border border-slate-200/75 bg-slate-50/75 px-4 py-3.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <DecisionPill label={getAlertSeverityDisplay(nextWorkItem.alert.severity).label} tone={getAlertSeverityDisplay(nextWorkItem.alert.severity).tone} />
-                <DecisionPill label={getAlertStateDisplay(nextWorkItem.alert.state).label} tone={getAlertStateDisplay(nextWorkItem.alert.state).tone} />
+            <div className="mt-3 decision-panel px-4 py-3.5">
+              <div className="flex flex-wrap gap-2">
+                <DecisionPill label={getAlertSeverityDisplay(nextWorkItem.alert.severity).label} tone={getAlertSeverityDisplay(nextWorkItem.alert.severity).tone} size="sm" />
+                <DecisionPill label={getAlertStateDisplay(nextWorkItem.alert.state).label} tone={getAlertStateDisplay(nextWorkItem.alert.state).tone} size="sm" />
               </div>
               <p className="mt-2 text-sm font-semibold text-ink-900">
                 {nextWorkItem.alert.ticker} {nextWorkItem.alert.title}
               </p>
-              <p className="mt-2 text-sm leading-6 text-slate-700">{nextWorkItem.alert.summary}</p>
-              <p className="mt-2 text-xs leading-5 text-slate-500">{getAlertNextStep(nextWorkItem.alert, nextWorkItem.analysis)}</p>
+              <p className="mt-1 text-sm leading-6 text-slate-700">{getAlertNextStep(nextWorkItem.alert, nextWorkItem.analysis)}</p>
             </div>
           ) : null}
 
-          <div className="mt-4 space-y-3">
+          <div className="mt-3 space-y-3">
             <div className="decision-panel px-4 py-3.5">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-medium text-ink-900">提醒強度</p>
@@ -546,28 +516,7 @@ export function TrackingPage() {
 
             <div className="decision-panel px-4 py-3.5">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-ink-900">類型統整</p>
-                <Badge tone="info">rules</Badge>
-              </div>
-              <div className="mt-3 space-y-2 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-slate-700">估值 / 價格帶</p>
-                  <p className="font-medium text-ink-900">{ruleCounts.valuation}</p>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-slate-700">總分 / 風格</p>
-                  <p className="font-medium text-ink-900">{ruleCounts.score}</p>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-slate-700">風險 / 事件後重估</p>
-                  <p className="font-medium text-ink-900">{ruleCounts.risk}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="decision-panel px-4 py-3.5">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-ink-900">研究動作分布</p>
+                <p className="text-sm font-medium text-ink-900">研究分布</p>
                 <Badge tone="neutral">{trackedAnalyses.length} 檔</Badge>
               </div>
               <div className="mt-3 space-y-2 text-sm">
@@ -580,7 +529,7 @@ export function TrackingPage() {
                   <p className="font-medium text-ink-900">{actionDistribution.watch}</p>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-slate-700">等價格 / 先不要碰</p>
+                  <p className="text-slate-700">等價格 / 暫避</p>
                   <p className="font-medium text-ink-900">{actionDistribution.waitOrAvoid}</p>
                 </div>
               </div>
@@ -589,19 +538,13 @@ export function TrackingPage() {
         </aside>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.04fr)_320px] xl:items-start">
         <SectionBlock
-          title="最近規則觸發"
-          subtitle="這是前端顯示的 alert history，不是即時通知。"
+          title="接下來的事件"
+          subtitle="事件提醒留在工作流裡，避免只盯著分數與警示。"
+          className="self-start"
         >
-          <AlertList alerts={alertHistory.slice(0, 6)} emptyLabel="目前沒有新的規則提醒。" />
-        </SectionBlock>
-
-        <SectionBlock
-          title="即將到來的事件節奏"
-          subtitle="事件節點繼續保留在本地工作流，避免只追著分數變化跑。"
-        >
-          <div className="space-y-3">
+          <div className="space-y-0 divide-y divide-slate-200/75">
             {openReminders.length ? (
               openReminders.slice(0, 5).map((reminder) => (
                 <ReminderRow
@@ -619,6 +562,16 @@ export function TrackingPage() {
             )}
           </div>
         </SectionBlock>
+
+        <aside className="workspace-rail self-start">
+          <div className="border-b border-slate-200/75 pb-2.5">
+            <h2 className="section-title">最近觸發</h2>
+            <p className="mt-1 compact-note">完整提醒放在這裡，不讓它搶走主工作區。</p>
+          </div>
+          <div className="mt-3">
+            <AlertList alerts={alertHistory.slice(0, 6)} variant="compact" emptyLabel="目前沒有新的規則提醒。" />
+          </div>
+        </aside>
       </div>
 
       {completedReminders.length ? (
@@ -626,43 +579,42 @@ export function TrackingPage() {
           title="最近完成"
           subtitle="保留本地處理紀錄，方便之後重新打開同一則提醒。"
         >
-          <div className="space-y-3">
+          <div className="space-y-0 divide-y divide-slate-200/75">
             {completedReminders.slice(0, 4).map((reminder) => (
-              <article key={reminder.id} className="rounded-xl border border-slate-200/75 bg-white/[0.84] px-4 py-3.5">
-                <div className="grid gap-3 lg:grid-cols-[180px_minmax(0,1fr)_176px] lg:items-start">
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge tone={getReminderTypeTone(reminder.type)}>{reminder.type}</Badge>
-                      <DecisionPill label="已完成" tone="positive" />
-                    </div>
-                    <p className="text-sm font-semibold tracking-[0.08em] text-slate-700">{reminder.ticker}</p>
-                    {reminder.progressUpdatedAt ? (
-                      <p className="text-sm text-slate-500">完成於 {formatDate(reminder.progressUpdatedAt)}</p>
-                    ) : null}
+              <article
+                key={reminder.id}
+                className="decision-row xl:grid-cols-[150px_minmax(0,1fr)_220px] xl:items-start"
+              >
+                <div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge tone={getReminderTypeTone(reminder.type)}>{reminder.type}</Badge>
+                    <DecisionPill label="已完成" tone="positive" size="sm" />
                   </div>
-
-                  <div>
-                    <h3 className="text-sm font-semibold text-ink-900">{reminder.title}</h3>
-                    <p className="mt-1.5 text-sm leading-6 text-slate-700">{reminder.nextStep}</p>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    {reminder.actions[0] ? (
-                      <ActionLink
-                        label={reminder.actions[0].label}
-                        to={reminder.actions[0].to}
-                        tone={reminder.actions[0].emphasis ?? "secondary"}
-                        fullWidth
-                      />
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={() => resetReminderProgress(reminder.id)}
-                      className="toolbar-button border-transparent bg-transparent text-slate-600 hover:border-slate-200 hover:bg-white"
-                    >
-                      重設提醒
-                    </button>
-                  </div>
+                  <p className="mt-2 text-sm font-semibold text-ink-900">{reminder.ticker}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    完成於 {reminder.progressUpdatedAt ? formatDate(reminder.progressUpdatedAt) : mockSnapshot.asOfDate}
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium leading-6 text-ink-900">{reminder.title}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">{reminder.affectsDecision}</p>
+                </div>
+                <div className="flex flex-wrap gap-2 xl:justify-end">
+                  {reminder.actions.map((action) => (
+                    <ActionLink
+                      key={action.label}
+                      label={action.label}
+                      to={action.to}
+                      tone={action.emphasis ?? "secondary"}
+                    />
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => resetReminderProgress(reminder.id)}
+                    className="toolbar-button border-transparent bg-transparent text-slate-600 hover:border-slate-200 hover:bg-white"
+                  >
+                    重新打開
+                  </button>
                 </div>
               </article>
             ))}

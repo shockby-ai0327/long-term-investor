@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 const navItems = [
   {
     to: "/",
-    label: "市場總覽",
+    label: "決策總覽",
     caption: "Overview",
     end: true
   },
@@ -49,10 +49,10 @@ export function SidebarNav({ compact = false }: SidebarNavProps) {
           className={({ isActive }) =>
             [
               "group relative overflow-hidden rounded-lg transition duration-150",
-              compact ? "min-w-[128px] shrink-0 px-3 py-2.5" : "px-3 py-2.5",
+              compact ? "min-w-[120px] shrink-0 px-3 py-2.5" : "px-3 py-2.5",
               isActive
                 ? "bg-ink-900 text-white"
-                : "text-slate-700 hover:bg-white/[0.72] hover:text-ink-900"
+                : "text-slate-700 hover:bg-white/[0.76] hover:text-ink-900"
             ].join(" ")
           }
         >
@@ -66,12 +66,12 @@ export function SidebarNav({ compact = false }: SidebarNavProps) {
                 ].join(" ")}
               />
               <div className={compact ? "" : "pl-2"}>
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium tracking-[0.01em]">{item.label}</p>
-                  <p className={`text-[10px] uppercase tracking-[0.18em] ${isActive ? "text-white/55" : "text-slate-400"}`}>
+                <p className="text-sm font-medium tracking-[0.01em]">{item.label}</p>
+                {!compact ? (
+                  <p className={`mt-1 text-[10px] uppercase tracking-[0.18em] ${isActive ? "text-white/52" : "text-slate-400"}`}>
                     {item.caption}
                   </p>
-                </div>
+                ) : null}
               </div>
             </>
           )}

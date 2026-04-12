@@ -154,7 +154,7 @@ export function evaluateAlerts(record: StockAnalysisRecord, snapshotDate: string
         severity: valuationDelta < 0 ? "negative" : "neutral",
         title: "事件後評分重估",
         summary: `${record.stock.ticker} 在 ${latestEvent.title} 後出現明顯評分變化。`,
-        reason: "用近期事件日期當作觸發點，提醒重新寫回 thesis。",
+        reason: "用近期事件日期當作觸發點，提醒重新寫回投資假設。",
         triggeredAt: latestEvent.date,
         actionLabel: "更新投資假設",
         actionTo: `/thesis/${record.stock.ticker}`

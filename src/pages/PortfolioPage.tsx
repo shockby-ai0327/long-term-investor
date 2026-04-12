@@ -11,7 +11,7 @@ import {
   type InvestmentAlert,
   type StockAnalysisRecord
 } from "../domain/investment";
-import { cashPosition, mockSnapshot, portfolioHoldings, portfolioNotes } from "../data/mockData";
+import { cashPosition, portfolioHoldings, portfolioNotes } from "../data/mockData";
 import { useWorkspaceState } from "../state/WorkspaceStateProvider";
 import type { PortfolioHolding } from "../types/investment";
 import { formatCurrency, formatPercent } from "../utils/format";
@@ -34,15 +34,15 @@ function getNextHoldingStep(holding: PortfolioHolding, analysis: StockAnalysisRe
     switch (topAlert.rule) {
       case "valuation_status_change":
       case "target_zone":
-        return "先回到估值區與 fair zone，確認這檔還適不適合新增資金。";
+        return "先回到估值區與合理帶，確認是否還適合新增資金。";
       case "overall_score_change":
-        return "先看評分拆解，再決定這次變動是否已改變持有理由。";
+        return "先看評分拆解，再決定這次變動是否真的改變持有理由。";
       case "stability_deterioration":
         return "先處理風險與集中度，必要時下修這檔在組合中的耐受度。";
       case "data_update_reprice":
-        return "把事件後的變化寫回 Thesis，再決定要不要調整部位節奏。";
+        return "把事件後變化寫回投資假設，再決定部位節奏。";
       case "style_fit":
-        return "重看這檔目前更適合哪種研究框架，不要把好公司直接等同於好配置。";
+        return "重看這檔目前更適合哪種研究框架，不把好公司直接等同好配置。";
       default:
         return topAlert.reason;
     }
@@ -57,10 +57,10 @@ function getNextHoldingStep(holding: PortfolioHolding, analysis: StockAnalysisRe
   }
 
   if (holding.weight >= 20) {
-    return "這檔已是組合核心，優先回頭確認 thesis 是否仍支撐高集中度。";
+    return "這檔已是核心部位，先確認 thesis 是否仍支撐高集中度。";
   }
 
-  return "維持持有，按既定節奏回頭檢查估值、風險與 thesis。";
+  return "維持持有，按節奏回頭檢查估值、風險與投資假設。";
 }
 
 function getPriorityLabel(holding: PortfolioHolding, analysis: StockAnalysisRecord, topAlert?: InvestmentAlert) {
@@ -105,8 +105,24 @@ function SummaryMetric({
   return (
     <div className="summary-metric">
       <p className="eyebrow-label">{label}</p>
-      <p className="mt-1.5 text-[1.35rem] font-semibold tracking-tight text-ink-900">{value}</p>
+      <p className="mt-1 text-[1.3rem] font-semibold tracking-tight text-ink-900">{value}</p>
       <p className="mt-1 text-xs leading-5 text-slate-500">{note}</p>
+    </div>
+  );
+}
+
+function AllocationRow({ label, weight, accent = "bg-ink-900" }: { label: string; weight: number; accent?: string }) {
+  return (
+    <div className="decision-row grid-cols-[minmax(0,1fr)_64px] items-center">
+      <div className="min-w-0">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-medium text-ink-900">{label}</p>
+          <p className="text-sm font-medium text-slate-700">{weight}%</p>
+        </div>
+        <div className="mt-2 bar-track">
+          <div className={`bar-fill ${accent}`} style={{ width: `${weight}%` }} />
+        </div>
+      </div>
     </div>
   );
 }
@@ -162,93 +178,81 @@ export function PortfolioPage() {
   return (
     <div className="space-y-4">
       <PageHeader
-        eyebrow="Portfolio"
-        title="投資組合工作台"
-        description="先看哪個部位要回頭，再看配置是否過度集中。這一頁把持股決策與配置風險放在同一張工作台。"
+        eyebrow="投資組合"
+        title="先處理最可能改變配置判斷的部位"
+        description="先看集中度、估值與風險提醒，再決定新增資金與檢查順序。"
         actions={
           <>
             <Link
               to="/tracking"
               className="toolbar-button border-slate-300 bg-white text-ink-900 hover:border-slate-400"
             >
-              看 Alerts
+              看追蹤工作台
             </Link>
             <Link
               to="/watchlist"
               className="toolbar-button border-ink-900 bg-ink-900 text-white hover:bg-ink-800"
             >
-              看 Watchlist
+              看觀察名單
             </Link>
           </>
         }
       />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.16fr)_320px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.16fr)_320px] xl:items-start">
         <SectionBlock
           title="先回頭的部位"
-          subtitle={`依 ${mockSnapshot.asOfDate} snapshot 的 alert、估值與集中度排序，先處理最容易改變配置判斷的持股。`}
+          subtitle="先處理最容易改變配置判斷的持股，不把每一檔都用同樣力氣看。"
+          className="self-start"
         >
-          <div className="space-y-3">
-            {reviewQueue.slice(0, 3).map(({ holding, analysis, topAlert, nextStep }) => {
+          <div className="space-y-0 divide-y divide-slate-200/75">
+            {reviewQueue.slice(0, 4).map(({ holding, analysis, topAlert, nextStep }, index) => {
               const actionDisplay = getActionDisplay(analysis.decision.action);
               const valuationDisplay = getValuationDisplay(analysis.decision.valuationStatus);
               const confidenceDisplay = getConfidenceDisplay(analysis.decision.confidenceLevel);
               const alertSeverity = topAlert ? getAlertSeverityDisplay(topAlert.severity) : null;
 
               return (
-                <article key={holding.id} className="rounded-xl border border-slate-200/75 bg-white/[0.86] px-4 py-4">
-                  <div className="grid gap-4 xl:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)_176px] xl:items-start">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge tone={getPriorityTone(holding, analysis, topAlert)}>
-                          {getPriorityLabel(holding, analysis, topAlert)}
-                        </Badge>
-                        <DecisionPill label={actionDisplay.label} tone={actionDisplay.tone} />
-                        <DecisionPill label={valuationDisplay.label} tone={valuationDisplay.tone} />
-                        {alertSeverity ? (
-                          <DecisionPill label={alertSeverity.label} tone={alertSeverity.tone} />
-                        ) : null}
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">
-                          {holding.ticker}
-                        </p>
-                      </div>
+                <article
+                  key={holding.id}
+                  className="decision-row xl:grid-cols-[56px_160px_minmax(0,1fr)_210px] xl:items-start"
+                >
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-sm font-semibold text-ink-900">
+                    {index + 1}
+                  </div>
 
-                      <h3 className="mt-2 text-[1.02rem] font-semibold tracking-tight text-ink-900">
-                        {holding.companyName}
-                      </h3>
-                      <p className="mt-2 text-sm leading-6 text-slate-700">{analysis.decision.summary}</p>
+                  <div>
+                    <Badge tone={getPriorityTone(holding, analysis, topAlert)}>{getPriorityLabel(holding, analysis, topAlert)}</Badge>
+                    <p className="mt-2 text-sm font-semibold text-ink-900">{holding.ticker}</p>
+                    <p className="mt-1 text-sm text-slate-600">{holding.companyName}</p>
+                    <p className="mt-1 text-xs text-slate-500">權重 {holding.weight}%</p>
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap gap-2">
+                      <DecisionPill label={actionDisplay.label} tone={actionDisplay.tone} size="sm" />
+                      <DecisionPill label={valuationDisplay.label} tone={valuationDisplay.tone} size="sm" />
+                      <DecisionPill label={`信心 ${confidenceDisplay.label}`} tone={confidenceDisplay.tone} size="sm" />
+                      {alertSeverity ? <DecisionPill label={alertSeverity.label} tone={alertSeverity.tone} size="sm" /> : null}
                     </div>
+                    <p className="mt-2 text-sm font-medium leading-6 text-ink-900">{analysis.decision.summary}</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">{analysis.decision.whyNotNow}</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">{nextStep}</p>
+                  </div>
 
-                    <div className="grid gap-2">
-                      <div className="rounded-lg border border-slate-200/75 bg-slate-50/70 px-3.5 py-3">
-                        <p className="eyebrow-label">目前狀態</p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <DecisionPill label={`權重 ${holding.weight}%`} tone={holding.weight >= 20 ? "negative" : "neutral"} />
-                          <DecisionPill label={`信心 ${confidenceDisplay.label}`} tone={confidenceDisplay.tone} />
-                        </div>
-                        <p className="mt-2 text-sm leading-6 text-slate-700">{analysis.decision.whyNotNow}</p>
-                      </div>
-
-                      <div className="rounded-lg border border-slate-200/75 bg-white/80 px-3.5 py-3">
-                        <p className="eyebrow-label">下一步</p>
-                        <p className="mt-1.5 text-sm leading-6 text-slate-700">{nextStep}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <Link
-                        to={`/stocks/${holding.ticker}`}
-                        className="toolbar-button border-ink-900 bg-ink-900 text-white hover:bg-ink-800"
-                      >
-                        看個股
-                      </Link>
-                      <Link
-                        to={`/thesis/${holding.ticker}`}
-                        className="toolbar-button border-slate-300 bg-white text-ink-900 hover:border-slate-400"
-                      >
-                        看 Thesis
-                      </Link>
-                    </div>
+                  <div className="space-y-2">
+                    <Link
+                      to={`/stocks/${holding.ticker}`}
+                      className="toolbar-button w-full border-ink-900 bg-ink-900 text-white hover:bg-ink-800"
+                    >
+                      看個股
+                    </Link>
+                    <Link
+                      to={`/thesis/${holding.ticker}`}
+                      className="toolbar-button w-full border-slate-300 bg-white text-ink-900 hover:border-slate-400"
+                    >
+                      看投資假設
+                    </Link>
                   </div>
                 </article>
               );
@@ -256,20 +260,20 @@ export function PortfolioPage() {
           </div>
         </SectionBlock>
 
-        <aside className="panel px-4 py-4 sm:px-5">
-          <div className="border-b border-slate-200/75 pb-3">
-            <h2 className="section-title">關鍵狀態</h2>
-            <p className="mt-1 muted-copy">先掃過集中度、持股動作分布與最大曝險，再決定配置下一步。</p>
+        <aside className="workspace-rail self-start">
+          <div className="border-b border-slate-200/75 pb-2.5">
+            <h2 className="section-title">配置摘要</h2>
+            <p className="mt-1 compact-note">先掃過總值、集中度與主要曝險，再決定資金要往哪裡放。</p>
           </div>
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
             <SummaryMetric label="組合總值" value={formatCurrency(totalValue)} note={`已投資 ${formatCurrency(investedValue)}`} />
-            <SummaryMetric label="需回頭部位" value={reviewNeededCount} note="高集中、估值偏高或有 active alert" />
-            <SummaryMetric label="前 3 大持股" value={`${topThreeWeight}%`} note="集中度決定 thesis 檢查頻率" />
-            <SummaryMetric label="現金部位" value={`${cashPosition.weight}%`} note="保留給更好的風險報酬比" />
+            <SummaryMetric label="需回頭部位" value={reviewNeededCount} note="集中、估值偏高或有新警示" />
+            <SummaryMetric label="前三大持股" value={`${topThreeWeight}%`} note="集中度決定檢查頻率" />
+            <SummaryMetric label="現金部位" value={`${cashPosition.weight}%`} note="保留給更佳風險報酬比" />
           </div>
 
-          <div className="mt-4 space-y-3">
+          <div className="mt-3 space-y-3">
             <div className="decision-panel px-4 py-3.5">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-medium text-ink-900">最高持股</p>
@@ -280,17 +284,19 @@ export function PortfolioPage() {
                 <DecisionPill
                   label={getActionDisplay(topHoldingAnalysis.decision.action).label}
                   tone={getActionDisplay(topHoldingAnalysis.decision.action).tone}
+                  size="sm"
                 />
                 <DecisionPill
                   label={getValuationDisplay(topHoldingAnalysis.decision.valuationStatus).label}
                   tone={getValuationDisplay(topHoldingAnalysis.decision.valuationStatus).tone}
+                  size="sm"
                 />
               </div>
             </div>
 
             <div className="decision-panel px-4 py-3.5">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-ink-900">持股動作分布</p>
+                <p className="text-sm font-medium text-ink-900">動作分布</p>
                 <Badge tone="neutral">{holdingsWithAnalysis.length} 檔</Badge>
               </div>
               <div className="mt-3 space-y-2 text-sm">
@@ -303,7 +309,7 @@ export function PortfolioPage() {
                   <p className="font-medium text-ink-900">{actionDistribution.watch}</p>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-slate-700">等價格 / 先不要碰</p>
+                  <p className="text-slate-700">等價格 / 暫避</p>
                   <p className="font-medium text-ink-900">{actionDistribution.waitOrAvoid}</p>
                 </div>
               </div>
@@ -311,7 +317,7 @@ export function PortfolioPage() {
 
             <div className="decision-panel px-4 py-3.5">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-ink-900">最大曝險</p>
+                <p className="text-sm font-medium text-ink-900">主要曝險</p>
                 <Badge tone={negativeAlertCount ? "negative" : "info"}>{negativeAlertCount} 則警示</Badge>
               </div>
               <div className="mt-3 space-y-2 text-sm">
@@ -331,7 +337,7 @@ export function PortfolioPage() {
 
       <SectionBlock
         title="持股決策清單"
-        subtitle="每列都同時回答目前狀態、為什麼還持有、為什麼現在不要更激進。"
+        subtitle="每列都只回答三件事：目前怎麼看、為什麼還持有、下一個檢查點在哪。"
       >
         <div className="space-y-0 divide-y divide-slate-200/75">
           {holdingsWithAnalysis.map(({ holding, analysis, topAlert, gainValue, gainPercent, nextStep }) => {
@@ -342,7 +348,7 @@ export function PortfolioPage() {
             return (
               <article
                 key={holding.id}
-                className="grid gap-4 py-4 xl:grid-cols-[160px_120px_150px_150px_minmax(0,1fr)_196px] xl:items-start"
+                className="decision-row xl:grid-cols-[150px_118px_168px_minmax(0,1fr)_210px] xl:items-start"
               >
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-ink-900">{holding.ticker}</p>
@@ -351,71 +357,69 @@ export function PortfolioPage() {
                 </div>
 
                 <div>
-                  <p className="eyebrow-label">部位</p>
-                  <p className="mt-1.5 text-[1.1rem] font-semibold tracking-tight text-ink-900">{holding.weight}%</p>
+                  <p className="text-[1.06rem] font-semibold tracking-tight text-ink-900">{holding.weight}%</p>
                   <p className="mt-1 text-xs text-slate-500">{formatCurrency(holding.marketValue)}</p>
-                  <p className={`mt-1 text-xs ${getPnLTone(gainPercent) === "positive" ? "text-emerald-700" : getPnLTone(gainPercent) === "negative" ? "text-rose-700" : "text-slate-600"}`}>
-                    未實現 {gainValue >= 0 ? "+" : ""}{formatCurrency(gainValue)} / {gainValue >= 0 ? "+" : ""}{formatPercent(gainPercent)}
+                  <p
+                    className={`mt-1 text-xs ${
+                      getPnLTone(gainPercent) === "positive"
+                        ? "text-emerald-700"
+                        : getPnLTone(gainPercent) === "negative"
+                          ? "text-rose-700"
+                          : "text-slate-600"
+                    }`}
+                  >
+                    未實現 {gainValue >= 0 ? "+" : ""}
+                    {formatCurrency(gainValue)} / {gainValue >= 0 ? "+" : ""}
+                    {formatPercent(gainPercent)}
                   </p>
                 </div>
 
-                <div>
-                  <p className="eyebrow-label">決策</p>
-                  <div className="mt-1.5 flex flex-wrap gap-2">
-                    <DecisionPill label={actionDisplay.label} tone={actionDisplay.tone} />
-                    <DecisionPill label={valuationDisplay.label} tone={valuationDisplay.tone} />
-                  </div>
-                </div>
-
-                <div>
-                  <p className="eyebrow-label">警示 / 信心</p>
-                  <div className="mt-1.5 flex flex-wrap gap-2">
-                    {topAlert ? (
-                      <DecisionPill
-                        label={getAlertSeverityDisplay(topAlert.severity).label}
-                        tone={getAlertSeverityDisplay(topAlert.severity).tone}
-                      />
-                    ) : (
-                      <DecisionPill label="無新警示" tone="neutral" />
-                    )}
-                    <DecisionPill label={`信心 ${confidenceDisplay.label}`} tone={confidenceDisplay.tone} />
-                  </div>
+                <div className="flex flex-wrap gap-2 xl:flex-col xl:items-start">
+                  <DecisionPill label={actionDisplay.label} tone={actionDisplay.tone} size="sm" />
+                  <DecisionPill label={valuationDisplay.label} tone={valuationDisplay.tone} size="sm" />
+                  <DecisionPill label={`信心 ${confidenceDisplay.label}`} tone={confidenceDisplay.tone} size="sm" />
+                  {topAlert ? (
+                    <DecisionPill
+                      label={getAlertSeverityDisplay(topAlert.severity).label}
+                      tone={getAlertSeverityDisplay(topAlert.severity).tone}
+                      size="sm"
+                    />
+                  ) : (
+                    <DecisionPill label="暫無新警示" tone="neutral" size="sm" />
+                  )}
                 </div>
 
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-ink-900">{analysis.decision.summary}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-700">
-                    <span className="font-medium text-ink-900">為什麼還持有：</span> {analysis.decision.whyNow}
+                  <p className="text-sm font-medium leading-6 text-ink-900">{analysis.decision.summary}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">
+                    <span className="font-medium text-slate-700">持有理由：</span>
+                    {analysis.decision.whyNow}
                   </p>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">
-                    <span className="font-medium text-ink-900">為什麼現在不更激進：</span> {analysis.decision.whyNotNow}
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    <span className="font-medium text-slate-700">限制：</span>
+                    {analysis.decision.whyNotNow}
                   </p>
-                  {analysis.decision.riskFlags.length ? (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {analysis.decision.riskFlags.slice(0, 2).map((flag) => (
-                        <DecisionPill key={flag} label={flag} tone="negative" />
-                      ))}
-                    </div>
-                  ) : null}
                 </div>
 
-                <div className="flex flex-col gap-2">
+                <div className="space-y-2">
                   <div className="rounded-lg border border-slate-200/75 bg-slate-50/70 px-3 py-2.5">
                     <p className="eyebrow-label">下一個檢查點</p>
-                    <p className="mt-1.5 text-sm leading-6 text-slate-700">{nextStep}</p>
+                    <p className="mt-1.5 text-xs leading-5 text-slate-700">{nextStep}</p>
                   </div>
-                  <Link
-                    to={`/stocks/${holding.ticker}`}
-                    className="toolbar-button border-ink-900 bg-ink-900 text-white hover:bg-ink-800"
-                  >
-                    看個股
-                  </Link>
-                  <Link
-                    to={`/thesis/${holding.ticker}`}
-                    className="toolbar-button border-slate-300 bg-white text-ink-900 hover:border-slate-400"
-                  >
-                    看 Thesis
-                  </Link>
+                  <div className="flex flex-wrap gap-2 xl:justify-end">
+                    <Link
+                      to={`/stocks/${holding.ticker}`}
+                      className="toolbar-button border-ink-900 bg-ink-900 text-white hover:bg-ink-800"
+                    >
+                      看個股
+                    </Link>
+                    <Link
+                      to={`/thesis/${holding.ticker}`}
+                      className="toolbar-button border-slate-300 bg-white text-ink-900 hover:border-slate-400"
+                    >
+                      看假設
+                    </Link>
+                  </div>
                 </div>
               </article>
             );
@@ -424,49 +428,34 @@ export function PortfolioPage() {
       </SectionBlock>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <SectionBlock title="產業配置" subtitle="先確認是否過度暴露在同一種經濟驅動。">
-          <div className="space-y-3">
+        <SectionBlock title="產業配置" subtitle="先確認是否把太多風險壓在同一種經濟驅動。">
+          <div className="space-y-0 divide-y divide-slate-200/75">
             {Object.entries(sectorAllocation)
               .sort(([, left], [, right]) => right - left)
               .map(([sector, weight]) => (
-                <div key={sector} className="decision-panel px-4 py-3.5">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-ink-900">{sector}</p>
-                    <p className="text-sm font-medium text-slate-700">{weight}%</p>
-                  </div>
-                  <div className="mt-2 h-2 rounded-full bg-slate-100">
-                    <div className="h-full rounded-full bg-ink-900" style={{ width: `${weight}%` }} />
-                  </div>
-                </div>
+                <AllocationRow key={sector} label={sector} weight={weight} />
               ))}
           </div>
         </SectionBlock>
 
         <SectionBlock title="地區配置" subtitle="地區暴露要和政策、匯率與供應鏈一起看。">
-          <div className="space-y-3">
+          <div className="space-y-0 divide-y divide-slate-200/75">
             {Object.entries(regionAllocation)
               .sort(([, left], [, right]) => right - left)
               .map(([region, weight]) => (
-                <div key={region} className="decision-panel px-4 py-3.5">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-ink-900">{region}</p>
-                    <p className="text-sm font-medium text-slate-700">{weight}%</p>
-                  </div>
-                  <div className="mt-2 h-2 rounded-full bg-slate-100">
-                    <div className="h-full rounded-full bg-rust-500" style={{ width: `${weight}%` }} />
-                  </div>
-                </div>
+                <AllocationRow key={region} label={region} weight={weight} accent="bg-rust-500" />
               ))}
           </div>
         </SectionBlock>
       </div>
 
-      <SectionBlock title="配置理由" subtitle="保留配置原則，避免最後只剩下持股與漲跌幅。">
-        <div className="grid gap-3 md:grid-cols-2">
+      <SectionBlock title="配置原則" subtitle="保留配置理由，避免最後只剩下持股與漲跌幅。">
+        <div className="space-y-0 divide-y divide-slate-200/75">
           {portfolioNotes.map((note) => (
-            <div key={note} className="decision-panel px-4 py-4">
+            <article key={note} className="decision-row xl:grid-cols-[120px_minmax(0,1fr)] xl:items-start">
+              <p className="eyebrow-label">配置理由</p>
               <p className="text-sm leading-6 text-slate-700">{note}</p>
-            </div>
+            </article>
           ))}
         </div>
       </SectionBlock>
